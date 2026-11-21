@@ -1,0 +1,401 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Velora | Product Management</title>
+
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="dashboard-body products-page">
+
+    <div class="admin-layout">
+
+        <!-- SIDEBAR -->
+        <aside class="admin-sidebar">
+
+            <div class="admin-brand">
+                <a href="dashboard.html">VELORA<span>.</span></a>
+                <p>ADMIN PANEL</p>
+            </div>
+
+            <nav class="admin-navigation">
+
+                <a href="dashboard.html" class="admin-nav-link">
+                    <span>▦</span> Dashboard
+                </a>
+
+                <a href="products.html" class="admin-nav-link active">
+                    <span>◈</span> Products
+                </a>
+
+                <a href="orders.html" class="admin-nav-link">
+                    <span>▤</span> Orders
+                </a>
+
+                <a href="customers.html" class="admin-nav-link">
+                    <span>♙</span> Customers
+                </a>
+
+            </nav>
+
+            <div class="admin-sidebar-bottom">
+                <a href="../store.html" class="admin-nav-link">
+                    <span>↗</span> View Store
+                </a>
+
+                <button class="admin-nav-link admin-logout-button"
+                    onclick="adminLogout()">
+                    <span>↪</span> Logout
+                </button>
+            </div>
+
+        </aside>
+
+
+        <!-- MAIN CONTENT -->
+        <main class="admin-main">
+
+            <!-- TOPBAR -->
+            <header class="admin-topbar">
+
+                <div class="topbar-left">
+                    <span class="topbar-label">VELORA ADMIN</span>
+                    <h1>Product Management</h1>
+                </div>
+
+                <div class="topbar-right">
+                    <div class="admin-user-info">
+                        <div class="admin-avatar">A</div>
+                        <div>
+                            <strong>Administrator</strong>
+                            <small>Store Manager</small>
+                        </div>
+                    </div>
+                </div>
+
+            </header>
+
+
+            <!-- PAGE CONTENT -->
+            <div class="admin-content">
+
+                <!-- PAGE INTRO -->
+                <section class="admin-page-intro">
+
+                    <div>
+                        <span class="section-eyebrow">
+                            INVENTORY CONTROL
+                        </span>
+
+                        <h2>Manage Your Products</h2>
+
+                        <p>
+                            Add new products, update product details,
+                            manage stock and control your store inventory.
+                        </p>
+                    </div>
+
+                </section>
+
+
+                <!-- PRODUCT STATISTICS -->
+                <section class="product-stats-grid">
+
+                    <div class="product-stat-card">
+                        <span class="product-stat-label">
+                            Total Products
+                        </span>
+
+                        <h3 id="totalProducts">0</h3>
+
+                        <span class="product-stat-description">
+                            Products in your store
+                        </span>
+                    </div>
+
+                    <div class="product-stat-card">
+                        <span class="product-stat-label">
+                            Total Stock
+                        </span>
+
+                        <h3 id="totalStock">0</h3>
+
+                        <span class="product-stat-description">
+                            Units available
+                        </span>
+                    </div>
+
+                    <div class="product-stat-card">
+                        <span class="product-stat-label">
+                            Categories
+                        </span>
+
+                        <h3 id="totalCategories">0</h3>
+
+                        <span class="product-stat-description">
+                            Product categories
+                        </span>
+                    </div>
+
+                    <div class="product-stat-card">
+                        <span class="product-stat-label">
+                            Low Stock
+                        </span>
+
+                        <h3 id="lowStockProducts">0</h3>
+
+                        <span class="product-stat-description">
+                            Products needing restock
+                        </span>
+                    </div>
+
+                </section>
+
+
+                <!-- ADD / EDIT PRODUCT FORM -->
+                <section class="product-form-section">
+
+                    <div class="section-heading">
+                        <div>
+                            <span class="section-eyebrow">
+                                PRODUCT MANAGEMENT
+                            </span>
+
+                            <h2 id="productFormTitle">
+                                Add New Product
+                            </h2>
+
+                            <p>
+                                Fill in the product details below.
+                            </p>
+                        </div>
+                    </div>
+
+
+                    <form id="productForm" class="product-form">
+
+                        <div class="product-form-grid">
+
+                            <!-- NAME -->
+                            <div class="form-group">
+                                <label for="productName">
+                                    Product Name *
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="productName"
+                                    placeholder="e.g. Everyday Cotton Shirt"
+                                    required
+                                >
+                            </div>
+
+
+                            <!-- CATEGORY -->
+                            <div class="form-group">
+                                <label for="productCategory">
+                                    Category *
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="productCategory"
+                                    placeholder="e.g. Clothing"
+                                    required
+                                >
+                            </div>
+
+
+                            <!-- PRICE -->
+                            <div class="form-group">
+                                <label for="productPrice">
+                                    Price (₹) *
+                                </label>
+
+                                <input
+                                    type="number"
+                                    id="productPrice"
+                                    placeholder="Enter price"
+                                    min="1"
+                                    step="0.01"
+                                    required
+                                >
+                            </div>
+
+
+                            <!-- STOCK -->
+                            <div class="form-group">
+                                <label for="productStock">
+                                    Stock Quantity *
+                                </label>
+
+                                <input
+                                    type="number"
+                                    id="productStock"
+                                    placeholder="Available quantity"
+                                    min="0"
+                                    step="1"
+                                    required
+                                >
+                            </div>
+
+
+                            <!-- DESCRIPTION -->
+                            <div class="form-group full-width">
+                                <label for="productDescription">
+                                    Description *
+                                </label>
+
+                                <textarea
+                                    id="productDescription"
+                                    rows="4"
+                                    placeholder="Describe your product..."
+                                    required
+                                ></textarea>
+                            </div>
+
+
+                            <!-- IMAGE -->
+                            <div class="form-group full-width">
+                                <label for="productImage">
+                                    Product Image Path / URL *
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="productImage"
+                                    placeholder="img/hoodie.jpeg"
+                                    required
+                                >
+
+                                <small class="form-hint">
+                                    Enter a local image path such as
+                                    img/hoodie.jpeg or paste a direct image URL.
+                                </small>
+                            </div>
+
+
+                            <!-- IMAGE PREVIEW -->
+                            <div class="product-image-preview-wrapper full-width">
+
+                                <div class="image-preview-label">
+                                    IMAGE PREVIEW
+                                </div>
+
+                                <div
+                                    id="imagePreview"
+                                    class="product-image-preview"
+                                >
+                                    <span>
+                                        Product image preview will appear here
+                                    </span>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- FORM MESSAGE -->
+                        <div
+                            id="productFormMessage"
+                            class="product-form-message"
+                        ></div>
+
+
+                        <!-- ACTION BUTTONS -->
+                        <div class="product-form-actions">
+
+                            <button
+                                type="reset"
+                                class="product-reset-button"
+                                id="clearProductForm"
+                            >
+                                Clear Form
+                            </button>
+
+                            <button
+                                type="button"
+                                class="product-reset-button"
+                                id="cancelEditButton"
+                                style="display:none;"
+                            >
+                                Cancel Edit
+                            </button>
+
+                            <button
+                                type="submit"
+                                id="saveProductButton"
+                                class="product-save-button"
+                            >
+                                Add Product to Store
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </section>
+
+
+                <!-- PRODUCTS LIST -->
+                <section class="admin-products-section">
+
+                    <div class="section-heading products-list-heading">
+
+                        <div>
+                            <span class="section-eyebrow">
+                                YOUR INVENTORY
+                            </span>
+
+                            <h2>Existing Products</h2>
+
+                            <p>
+                                View, edit and delete products from your store.
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    <!-- SEARCH -->
+                    <div class="admin-product-search-wrapper">
+
+                        <input
+                            type="search"
+                            id="productSearch"
+                            placeholder="Search products by name or category..."
+                        >
+
+                    </div>
+
+
+                    <!-- PRODUCTS GRID -->
+                    <div
+                        id="adminProductsGrid"
+                        class="admin-products-grid"
+                    >
+
+                        <div class="admin-products-loading">
+                            Loading products...
+                        </div>
+
+                    </div>
+
+                </section>
+
+            </div>
+
+        </main>
+
+    </div>
+
+
+    <!-- SCRIPTS -->
+    <script src="js/admin-auth.js"></script>
+    <script src="js/products.js"></script>
+
+</body>
+</html>

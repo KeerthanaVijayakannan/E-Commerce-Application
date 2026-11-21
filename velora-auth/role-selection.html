@@ -1,0 +1,467 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Welcome | Velora</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap"
+          rel="stylesheet">
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #faf8f5;
+            --white: #ffffff;
+            --brown: #30251f;
+            --brown-light: #49382f;
+            --terracotta: #b76e52;
+            --muted: #8d7d70;
+            --border: #e9e1d9;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--brown);
+        }
+
+        /* NAVBAR */
+
+        .role-navbar {
+            height: 85px;
+            padding: 0 7%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            background: rgba(250, 248, 245, 0.95);
+        }
+
+        .brand {
+            text-decoration: none;
+            color: var(--brown);
+        }
+
+        .brand h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 29px;
+            letter-spacing: 3px;
+            font-weight: 600;
+        }
+
+        .brand span {
+            display: block;
+            font-size: 9px;
+            letter-spacing: 3px;
+            color: var(--muted);
+            margin-top: 3px;
+        }
+
+        .nav-right {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        /* MAIN */
+
+        .role-main {
+            min-height: calc(100vh - 85px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 7%;
+        }
+
+        .role-container {
+            width: 100%;
+            max-width: 1050px;
+        }
+
+        .role-heading {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .role-eyebrow {
+            color: var(--terracotta);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            margin-bottom: 18px;
+        }
+
+        .role-heading h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(34px, 4vw, 48px);
+            font-weight: 500;
+            margin-bottom: 15px;
+        }
+
+        .role-heading p {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        /* CARDS */
+
+        .role-cards {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 25px;
+        }
+
+        .role-card {
+            position: relative;
+            overflow: hidden;
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 35px;
+            text-decoration: none;
+            color: var(--brown);
+            transition: 0.3s ease;
+        }
+
+        .role-card:hover {
+            transform: translateY(-6px);
+            border-color: #cba58f;
+            box-shadow: 0 15px 40px rgba(69, 47, 33, 0.07);
+        }
+
+        .role-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+
+        .role-icon {
+            width: 58px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 15px;
+            font-size: 25px;
+        }
+
+        .customer-icon {
+            background: #f4e8df;
+            color: #a66c50;
+        }
+
+        .admin-icon {
+            background: #eae5df;
+            color: #554237;
+        }
+
+        .role-number {
+            font-family: 'Playfair Display', serif;
+            font-size: 32px;
+            color: #e5dcd4;
+        }
+
+        .role-card h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+
+        .role-card p {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 360px;
+            min-height: 48px;
+        }
+
+        .role-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 9px;
+            margin-top: 24px;
+        }
+
+        .role-feature {
+            padding: 8px 12px;
+            background: #faf8f5;
+            border: 1px solid #eee7e0;
+            border-radius: 30px;
+            font-size: 10px;
+            color: #79685b;
+        }
+
+        .role-card-bottom {
+            margin-top: 32px;
+            padding-top: 20px;
+            border-top: 1px solid #eee7e0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .role-action {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            color: var(--terracotta);
+        }
+
+        .role-arrow {
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            font-size: 17px;
+            transition: 0.3s;
+        }
+
+        .role-card:hover .role-arrow {
+            background: var(--brown);
+            color: white;
+            border-color: var(--brown);
+            transform: translateX(3px);
+        }
+
+        /* FOOTER */
+
+        .role-footer {
+            text-align: center;
+            padding: 25px;
+            color: #a09286;
+            font-size: 11px;
+            letter-spacing: 0.3px;
+        }
+
+        /* RESPONSIVE */
+
+        @media (max-width: 768px) {
+
+            .role-navbar {
+                height: 72px;
+                padding: 0 5%;
+            }
+
+            .brand h1 {
+                font-size: 24px;
+            }
+
+            .role-main {
+                padding: 50px 5%;
+            }
+
+            .role-heading {
+                margin-bottom: 30px;
+            }
+
+            .role-cards {
+                grid-template-columns: 1fr;
+                gap: 18px;
+            }
+
+            .role-card {
+                padding: 25px;
+            }
+
+        }
+
+        @media (max-width: 420px) {
+
+            .nav-right {
+                font-size: 10px;
+            }
+
+            .role-heading h2 {
+                font-size: 32px;
+            }
+
+            .role-card h3 {
+                font-size: 24px;
+            }
+
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <header class="role-navbar">
+
+        <a href="store.html" class="brand">
+            <h1>VELORA</h1>
+            <span>CURATED FOR YOU</span>
+        </a>
+
+        <div class="nav-right">
+            Welcome to Velora
+        </div>
+
+    </header>
+
+
+    <!-- MAIN CONTENT -->
+    <main class="role-main">
+
+        <div class="role-container">
+
+            <div class="role-heading">
+
+                <div class="role-eyebrow">
+                    YOUR EXPERIENCE STARTS HERE
+                </div>
+
+                <h2>Welcome to Velora</h2>
+
+                <p>
+                    Select how you would like to continue.
+                    <br>
+                    We're here to make your experience seamless.
+                </p>
+
+            </div>
+
+
+            <!-- ROLE CARDS -->
+            <div class="role-cards">
+
+
+                <!-- CUSTOMER -->
+                <a href="login.html" class="role-card">
+
+                    <div class="role-card-top">
+
+                        <div class="role-icon customer-icon">
+                            ♡
+                        </div>
+
+                        <div class="role-number">
+                            01
+                        </div>
+
+                    </div>
+
+                    <h3>I'm a Customer</h3>
+
+                    <p>
+                        Discover products, explore collections
+                        and enjoy a personalized shopping experience.
+                    </p>
+
+                    <div class="role-features">
+
+                        <span class="role-feature">
+                            Shop Products
+                        </span>
+
+                        <span class="role-feature">
+                            Track Orders
+                        </span>
+
+                        <span class="role-feature">
+                            Personal Account
+                        </span>
+
+                    </div>
+
+                    <div class="role-card-bottom">
+
+                        <span class="role-action">
+                            CONTINUE AS CUSTOMER
+                        </span>
+
+                        <span class="role-arrow">
+                            →
+                        </span>
+
+                    </div>
+
+                </a>
+
+
+                <!-- ADMIN -->
+                <a href="admin/admin-login.html" class="role-card">
+
+                    <div class="role-card-top">
+
+                        <div class="role-icon admin-icon">
+                            ◈
+                        </div>
+
+                        <div class="role-number">
+                            02
+                        </div>
+
+                    </div>
+
+                    <h3>I'm an Admin</h3>
+
+                    <p>
+                        Manage your store, monitor orders,
+                        control inventory and oversee customers.
+                    </p>
+
+                    <div class="role-features">
+
+                        <span class="role-feature">
+                            Dashboard
+                        </span>
+
+                        <span class="role-feature">
+                            Manage Products
+                        </span>
+
+                        <span class="role-feature">
+                            Manage Orders
+                        </span>
+
+                    </div>
+
+                    <div class="role-card-bottom">
+
+                        <span class="role-action">
+                            CONTINUE AS ADMIN
+                        </span>
+
+                        <span class="role-arrow">
+                            →
+                        </span>
+
+                    </div>
+
+                </a>
+
+
+            </div>
+
+        </div>
+
+    </main>
+
+
+    <!-- FOOTER -->
+    <footer class="role-footer">
+        © 2026 Velora. All rights reserved.
+    </footer>
+
+</body>
+</html>

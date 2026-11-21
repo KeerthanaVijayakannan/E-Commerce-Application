@@ -1,0 +1,199 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Velora | Order Management</title>
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+
+<body class="dashboard-body orders-page">
+
+<div class="admin-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="admin-sidebar">
+
+        <div class="admin-brand">
+            <a href="dashboard.html">VELORA<span>.</span></a>
+            <p>ADMIN PANEL</p>
+        </div>
+
+        <nav class="admin-navigation">
+            <a href="dashboard.html" class="admin-nav-link">
+                <span>▦</span> Dashboard
+            </a>
+
+            <a href="products.html" class="admin-nav-link">
+                <span>◈</span> Products
+            </a>
+
+            <a href="orders.html" class="admin-nav-link active">
+                <span>▤</span> Orders
+            </a>
+
+            <a href="customers.html" class="admin-nav-link">
+                <span>♙</span> Customers
+            </a>
+        </nav>
+
+        <div class="admin-sidebar-bottom">
+            <a href="../store.html" class="admin-nav-link">
+                <span>↗</span> View Store
+            </a>
+
+            <button class="admin-nav-link admin-logout-button"
+                    onclick="adminLogout()">
+                <span>↪</span> Logout
+            </button>
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN -->
+    <main class="admin-main">
+
+        <!-- TOPBAR -->
+        <header class="admin-topbar">
+
+            <div class="topbar-left">
+                <span class="topbar-label">VELORA ADMIN</span>
+                <h1>Order Management</h1>
+            </div>
+
+            <div class="topbar-right">
+                <div class="admin-user-info">
+                    <div class="admin-avatar">A</div>
+                    <div>
+                        <strong>Administrator</strong>
+                        <small>Store Manager</small>
+                    </div>
+                </div>
+            </div>
+
+        </header>
+
+
+        <div class="admin-content">
+
+            <!-- INTRO -->
+            <section class="admin-page-intro">
+                <div>
+                    <span class="section-eyebrow">ORDER MANAGEMENT</span>
+                    <h2>Manage Your Orders</h2>
+                    <p>Track customer orders, review purchases and update order status.</p>
+                </div>
+            </section>
+
+
+            <!-- ORDER STATS -->
+            <section class="orders-stats-grid">
+
+                <div class="orders-stat-card">
+                    <span>Total Orders</span>
+                    <h3 id="ordersTotal">0</h3>
+                    <small>All customer orders</small>
+                </div>
+
+                <div class="orders-stat-card">
+                    <span>Pending</span>
+                    <h3 id="ordersPending">0</h3>
+                    <small>Awaiting processing</small>
+                </div>
+
+                <div class="orders-stat-card">
+                    <span>Processing</span>
+                    <h3 id="ordersProcessing">0</h3>
+                    <small>Being prepared</small>
+                </div>
+
+                <div class="orders-stat-card">
+                    <span>Delivered</span>
+                    <h3 id="ordersDelivered">0</h3>
+                    <small>Successfully completed</small>
+                </div>
+
+            </section>
+
+
+            <!-- ORDER LIST -->
+            <section class="orders-list-section">
+
+                <div class="section-heading">
+                    <div>
+                        <span class="section-eyebrow">CUSTOMER PURCHASES</span>
+                        <h2>All Orders</h2>
+                        <p>View and manage every order placed in your store.</p>
+                    </div>
+                </div>
+
+
+                <!-- FILTERS -->
+                <div class="orders-toolbar">
+
+                    <input
+                        type="search"
+                        id="orderSearch"
+                        placeholder="Search order ID or customer..."
+                    >
+
+                    <select id="orderStatusFilter">
+                        <option value="all">All Statuses</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Processing">Processing</option>
+                        <option value="Shipped">Shipped</option>
+                        <option value="Delivered">Delivered</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+
+                </div>
+
+
+                <!-- TABLE -->
+                <div class="orders-table-container">
+
+                    <table class="orders-admin-table">
+
+                        <thead>
+                            <tr>
+                                <th>ORDER ID</th>
+                                <th>CUSTOMER</th>
+                                <th>DATE</th>
+                                <th>ITEMS</th>
+                                <th>AMOUNT</th>
+                                <th>STATUS</th>
+                                <th>ACTION</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="ordersTableBody">
+                            <tr>
+                                <td colspan="7" class="orders-loading">
+                                    Loading orders...
+                                </td>
+                            </tr>
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                <div id="ordersEmptyMessage" class="orders-empty" style="display:none;">
+                    No orders found.
+                </div>
+
+            </section>
+
+        </div>
+
+    </main>
+
+</div>
+
+<script src="js/admin-auth.js"></script>
+<script src="js/orders.js"></script>
+
+</body>
+</html>

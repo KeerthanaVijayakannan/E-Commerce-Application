@@ -1,0 +1,189 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customers | Velora Admin</title>
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+
+<body class="dashboard-body customers-page">
+
+<div class="admin-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="admin-sidebar">
+
+        <div class="admin-brand">
+            <h2>VELORA</h2>
+            <span>ADMIN PANEL</span>
+        </div>
+
+        <nav class="admin-navigation">
+
+            <a href="dashboard.html" class="admin-nav-link">
+                <span>◫</span> Dashboard
+            </a>
+
+            <a href="products.html" class="admin-nav-link">
+                <span>▣</span> Products
+            </a>
+
+            <a href="orders.html" class="admin-nav-link">
+                <span>▤</span> Orders
+            </a>
+
+            <a href="customers.html" class="admin-nav-link active">
+                <span>♙</span> Customers
+            </a>
+
+        </nav>
+
+        <div class="admin-sidebar-bottom">
+
+            <a href="../store.html" class="admin-nav-link">
+                <span>↗</span> View Store
+            </a>
+
+            <button class="admin-nav-link admin-logout-button"
+                    id="adminLogout">
+                <span>⇥</span> Logout
+            </button>
+
+        </div>
+
+    </aside>
+
+    <!-- MAIN -->
+    <main class="admin-main">
+
+        <header class="admin-topbar">
+            <div>
+                <span class="admin-topbar-label">VELORA ADMIN</span>
+                <h2>Customer Management</h2>
+            </div>
+        </header>
+
+        <div class="admin-content">
+
+            <!-- INTRO -->
+            <section class="admin-page-intro">
+                <div>
+                    <span class="section-eyebrow">CUSTOMER OVERVIEW</span>
+                    <h1>Manage Your Customers</h1>
+                    <p>
+                        View customer information, track their orders
+                        and understand your customer base.
+                    </p>
+                </div>
+            </section>
+
+            <!-- STATS -->
+            <section class="customers-stats-grid">
+
+                <div class="customer-stat-card">
+                    <div class="customer-stat-label">Total Customers</div>
+                    <h2 id="totalCustomers">0</h2>
+                    <p>Unique customers</p>
+                </div>
+
+                <div class="customer-stat-card">
+                    <div class="customer-stat-label">New Customers</div>
+                    <h2 id="newCustomers">0</h2>
+                    <p>Added this month</p>
+                </div>
+
+                <div class="customer-stat-card">
+                    <div class="customer-stat-label">Total Orders</div>
+                    <h2 id="customerTotalOrders">0</h2>
+                    <p>Orders placed</p>
+                </div>
+
+                <div class="customer-stat-card">
+                    <div class="customer-stat-label">Repeat Customers</div>
+                    <h2 id="repeatCustomers">0</h2>
+                    <p>Placed multiple orders</p>
+                </div>
+
+            </section>
+
+            <!-- CUSTOMER LIST -->
+            <section class="customers-list-section">
+
+                <div class="customers-section-heading">
+                    <div>
+                        <span class="section-eyebrow">CUSTOMER DATABASE</span>
+                        <h2>All Customers</h2>
+                    </div>
+                </div>
+
+                <div class="customers-toolbar">
+
+                    <div class="customers-search-box">
+                        <span>⌕</span>
+                        <input
+                            type="text"
+                            id="customerSearch"
+                            placeholder="Search by name, email or phone..."
+                        >
+                    </div>
+
+                    <span class="customers-count" id="customersCount">
+                        0 customers
+                    </span>
+
+                </div>
+
+                <div class="customers-table-wrapper">
+
+                    <table class="customers-table">
+
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Orders</th>
+                                <th>Total Spent</th>
+                                <th>Last Order</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="customersTableBody">
+                            <tr>
+                                <td colspan="6" class="customers-loading">
+                                    Loading customers...
+                                </td>
+                            </tr>
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                <div class="customers-empty-message"
+                     id="customersEmptyMessage"
+                     style="display:none;">
+                    <div class="customers-empty-icon">♙</div>
+                    <h3>No customers found</h3>
+                    <p>Customers will appear here when orders are placed.</p>
+                </div>
+
+            </section>
+
+        </div>
+
+        <footer class="admin-page-footer">
+            Velora Admin Panel
+        </footer>
+
+    </main>
+
+</div>
+
+<script src="js/admin-auth.js"></script>
+<script src="js/customers.js"></script>
+
+</body>
+</html>

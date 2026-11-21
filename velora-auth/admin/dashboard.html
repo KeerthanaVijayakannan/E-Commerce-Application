@@ -1,0 +1,285 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Velora | Admin Dashboard</title>
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="dashboard-body">
+
+    <div class="admin-layout">
+
+        <!-- SIDEBAR -->
+        <aside class="admin-sidebar">
+
+            <a href="dashboard.html" class="sidebar-logo">
+                <span class="logo-name">velora</span>
+                <span class="logo-subtitle">ADMIN PANEL</span>
+            </a>
+
+            <div class="sidebar-section-label">MENU</div>
+
+            <nav class="admin-nav">
+
+                <a href="dashboard.html" class="nav-link active">
+                    <span class="nav-icon">⌂</span>
+                    <span>Dashboard</span>
+                </a>
+
+                <a href="products.html" class="nav-link">
+                    <span class="nav-icon">▦</span>
+                    <span>Products</span>
+                </a>
+
+                <a href="orders.html" class="nav-link">
+                    <span class="nav-icon">▤</span>
+                    <span>Orders</span>
+                </a>
+
+                <a href="customers.html" class="nav-link">
+                    <span class="nav-icon">♙</span>
+                    <span>Customers</span>
+                </a>
+
+            </nav>
+
+            <div class="sidebar-bottom">
+
+                <a href="../store.html" class="store-link">
+                    <span class="nav-icon">↗</span>
+                    <span>View Store</span>
+                </a>
+
+                <button class="sidebar-logout" id="adminLogout">
+                    <span class="nav-icon">↪</span>
+                    <span>Logout</span>
+                </button>
+
+            </div>
+
+        </aside>
+
+
+        <!-- MAIN CONTENT -->
+        <main class="admin-main">
+
+            <!-- HEADER -->
+            <header class="dashboard-header">
+
+                <div class="dashboard-heading">
+                    <span class="header-eyebrow">OVERVIEW</span>
+                    <h1>Dashboard</h1>
+                    <p class="header-description">
+                        Welcome back! Here's what's happening with your store today.
+                    </p>
+                </div>
+
+                <div class="admin-profile">
+                    <div class="admin-avatar">A</div>
+                    <div class="admin-profile-info">
+                        <span class="admin-profile-name">Administrator</span>
+                        <span class="admin-profile-role">Store Manager</span>
+                    </div>
+                </div>
+
+            </header>
+
+
+            <!-- STATISTICS -->
+            <section class="stats-grid">
+
+                <article class="stat-card">
+
+                    <div class="stat-top">
+                        <div>
+                            <span class="stat-label">Total Products</span>
+                            <h2 id="totalProducts">0</h2>
+                        </div>
+
+                        <div class="stat-icon product-icon">▦</div>
+                    </div>
+
+                    <p class="stat-description">Products in your store</p>
+
+                </article>
+
+
+                <article class="stat-card">
+
+                    <div class="stat-top">
+                        <div>
+                            <span class="stat-label">Total Orders</span>
+                            <h2 id="totalOrders">0</h2>
+                        </div>
+
+                        <div class="stat-icon order-icon">▤</div>
+                    </div>
+
+                    <p class="stat-description">Orders received</p>
+
+                </article>
+
+
+                <article class="stat-card">
+
+                    <div class="stat-top">
+                        <div>
+                            <span class="stat-label">Total Customers</span>
+                            <h2 id="totalCustomers">0</h2>
+                        </div>
+
+                        <div class="stat-icon customer-icon">♙</div>
+                    </div>
+
+                    <p class="stat-description">Registered customers</p>
+
+                </article>
+
+
+                <article class="stat-card revenue-card">
+
+                    <div class="stat-top">
+                        <div>
+                            <span class="stat-label">Total Revenue</span>
+                            <h2 id="totalRevenue">₹0</h2>
+                        </div>
+
+                        <div class="stat-icon revenue-icon">₹</div>
+                    </div>
+
+                    <p class="stat-description">Revenue from orders</p>
+
+                </article>
+
+            </section>
+
+
+            <!-- RECENT ORDERS -->
+            <section class="recent-orders-section">
+
+                <div class="section-heading">
+
+                    <div>
+                        <span class="section-eyebrow">STORE ACTIVITY</span>
+                        <h2>Recent Orders</h2>
+                    </div>
+
+                    <a href="orders.html" class="view-all-link">
+                        View All Orders →
+                    </a>
+
+                </div>
+
+
+                <div class="orders-table-wrapper">
+
+                    <table class="dashboard-orders-table">
+
+                        <thead>
+                            <tr>
+                                <th>ORDER ID</th>
+                                <th>CUSTOMER</th>
+                                <th>DATE</th>
+                                <th>AMOUNT</th>
+                                <th>STATUS</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="recentOrdersTableBody">
+
+                            <tr>
+                                <td colspan="5" class="table-loading">
+                                    Loading orders...
+                                </td>
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+
+            <!-- QUICK ACTIONS -->
+            <section class="quick-actions-section">
+
+                <div class="section-heading">
+
+                    <div>
+                        <span class="section-eyebrow">SHORTCUTS</span>
+                        <h2>Quick Actions</h2>
+                    </div>
+
+                </div>
+
+
+                <div class="quick-actions-grid">
+
+                    <a href="products.html" class="quick-action-card">
+
+                        <div class="quick-action-icon">＋</div>
+
+                        <div class="quick-action-content">
+                            <h3>Add New Product</h3>
+                            <p>Add products to your store inventory</p>
+                        </div>
+
+                        <span class="quick-action-arrow">→</span>
+
+                    </a>
+
+
+                    <a href="orders.html" class="quick-action-card">
+
+                        <div class="quick-action-icon">▤</div>
+
+                        <div class="quick-action-content">
+                            <h3>Manage Orders</h3>
+                            <p>Review and update customer orders</p>
+                        </div>
+
+                        <span class="quick-action-arrow">→</span>
+
+                    </a>
+
+
+                    <a href="customers.html" class="quick-action-card">
+
+                        <div class="quick-action-icon">♙</div>
+
+                        <div class="quick-action-content">
+                            <h3>View Customers</h3>
+                            <p>Explore your customer information</p>
+                        </div>
+
+                        <span class="quick-action-arrow">→</span>
+
+                    </a>
+
+                </div>
+
+            </section>
+
+
+            <!-- FOOTER -->
+            <footer class="admin-page-footer">
+                <p>© 2026 Velora. Crafted with care.</p>
+                <p>Admin Dashboard</p>
+            </footer>
+
+        </main>
+
+    </div>
+
+
+    <!-- SCRIPTS -->
+    <!-- Firebase configuration from project root -->
+<script src="js/admin-auth.js" defer></script>
+<script src="js/dashboard.js" defer></script>
+
+</body>
+</html>
