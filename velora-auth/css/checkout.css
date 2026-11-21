@@ -303,3 +303,122 @@ select {
         gap: 0;
     }
 }
+/* Saved Addresses */
+.saved-address-heading {
+    font-family: "Playfair Display", serif;
+    font-size: 20px;
+    margin: 20px 0 15px;
+    color: #24231f;
+}
+
+#savedAddresses {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.saved-address-card {
+    border: 1px solid #eee8e2;
+    border-radius: 12px;
+    padding: 18px;
+    background: #fff;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.saved-address-card:hover {
+    border-color: #a35f46;
+}
+
+.saved-address-card.selected {
+    border: 2px solid #a35f46;
+    background: #fcf8f5;
+}
+
+.saved-address-card input[type="radio"] {
+    accent-color: #a35f46;
+    margin-right: 8px;
+}
+
+.saved-address-card strong {
+    color: #24231f;
+    font-size: 15px;
+}
+
+.saved-address-card p {
+    color: #77736d;
+    font-size: 14px;
+    line-height: 1.7;
+    margin: 8px 0 0;
+}
+
+.address-type-badge {
+    display: inline-block;
+    background: #f3e8e2;
+    color: #a35f46;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    margin-left: 8px;
+}
+
+.add-address-button {
+    margin: 15px 0;
+    padding: 12px 18px;
+    border: 1px solid #a35f46;
+    border-radius: 8px;
+    background: transparent;
+    color: #a35f46;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+.add-address-button:hover {
+    background: #a35f46;
+    color: #fff;
+}
+
+#savedAddressesSection {
+    margin-bottom: 20px;
+}
+
+#addressForm {
+    margin-top: 20px;
+}
+/* Saved Address Actions */
+.saved-address-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.saved-address-actions button {
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: 0.2s ease;
+}
+
+.edit-address-button {
+    background: #fff;
+    border: 1px solid #a35f46;
+    color: #a35f46;
+}
+
+.edit-address-button:hover {
+    background: #a35f46;
+    color: #fff;
+}
+
+.delete-address-button {
+    background: #fff;
+    border: 1px solid #d9b8ad;
+    color: #b34d3b;
+}
+
+.delete-address-button:hover {
+    background: #b34d3b;
+    color: #fff;
+}
