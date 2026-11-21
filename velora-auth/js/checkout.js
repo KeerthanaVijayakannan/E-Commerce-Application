@@ -1,764 +1,869 @@
+/* =========================
+   CONFIGURATION
+========================= */
+
 const API_KEY = "AIzaSyAbnDfdwRBn8lPhXVw8xDq5MZEb2X0SK5M";
 
-const FIRESTORE_URL =
-    `https://firestore.googleapis.com/v1/projects/e-commerce-b63d7/databases/(default)/documents`;
+const FIRESTORE = `https://firestore.googleapis.com/v1/projects/e-commerce-b63d7/databases/(default)/documents`;
 
-const user = JSON.parse(sessionStorage.getItem("veloraUser"));
-const cart = JSON.parse(localStorage.getItem("veloraCart")) || [];
+// Configure your actual store UPI ID here before enabling manual UPI payments.
+const STORE_UPI_ID = "CONFIGURE_STORE_UPI_ID";
 
-const checkoutItems = document.getElementById("checkoutItems");
-const checkoutSubtotal = document.getElementById("checkoutSubtotal");
-const checkoutShipping = document.getElementById("checkoutShipping");
-const checkoutTotal = document.getElementById("checkoutTotal");
-const placeOrderBtn = document.getElementById("placeOrderBtn");
-const addressForm = document.getElementById("addressForm");
+const user = JSON.parse(sessionStorage.getItem("veloraUser") || "null");
+const cart = JSON.parse(localStorage.getItem("veloraCart") || "[]");
 
-const savedAddressesSection =
-    document.getElementById("savedAddressesSection");
 
-const savedAddressesContainer =
-    document.getElementById("savedAddresses");
+/* =========================
+   HELPER FUNCTIONS
+========================= */
 
-const addNewAddressBtn =
-    document.getElementById("addNewAddressBtn");
+const $ = id => document.getElementById(id);
 
-const saveAddressBtn =
-    document.getElementById("saveAddressBtn");
+const str = v => ({
+    stringValue: String(v ?? "")
+});
 
-let subtotal = 0;
-let shipping = 0;
-let total = 0;
-let products = [];
-let savedAddresses = [];
-let selectedAddress = null;
-let editingAddressId = null;
-let missingProducts = false;
+const num = v => ({
+    doubleValue: Number(v || 0)
+});
 
-// --------------------------------------------------
-// FIRESTORE DECODING
-// --------------------------------------------------
-
-function decodeFirestoreValue(value) {
-    if (!value) return "";
-
-    if (value.stringValue !== undefined) return value.stringValue;
-    if (value.integerValue !== undefined) return Number(value.integerValue);
-    if (value.doubleValue !== undefined) return Number(value.doubleValue);
-    if (value.booleanValue !== undefined) return value.booleanValue;
-    if (value.timestampValue !== undefined) return value.timestampValue;
-    if (value.nullValue !== undefined) return null;
-
-    if (value.mapValue) {
-        return decodeFirestoreFields(value.mapValue.fields || {});
+const map = fields => ({
+    mapValue: {
+        fields
     }
+});
 
-    if (value.arrayValue) {
-        return (value.arrayValue.values || []).map(decodeFirestoreValue);
+const arr = values => ({
+    arrayValue: {
+        values
+    }
+});
+
+function decode(v) {
+    if (!v) return "";
+
+    if (v.stringValue !== undefined) return v.stringValue;
+    if (v.integerValue !== undefined) return Number(v.integerValue);
+    if (v.doubleValue !== undefined) return Number(v.doubleValue);
+    if (v.booleanValue !== undefined) return v.booleanValue;
+    if (v.timestampValue !== undefined) return v.timestampValue;
+
+    if (v.mapValue) return decodeFields(v.mapValue.fields);
+
+    if (v.arrayValue) {
+        return (v.arrayValue.values || []).map(decode);
     }
 
     return "";
 }
 
-function decodeFirestoreFields(fields) {
-    const result = {};
+function decodeFields(f) {
+    const o = {};
 
-    Object.entries(fields || {}).forEach(([key, value]) => {
-        result[key] = decodeFirestoreValue(value);
+    Object.entries(f || {}).forEach(([k, v]) => {
+        o[k] = decode(v);
     });
 
-    return result;
+    return o;
 }
 
-// --------------------------------------------------
-// HELPER FUNCTIONS
-// --------------------------------------------------
-
-function escapeHTML(value) {
-    return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+function esc(s) {
+    return String(s ?? "").replace(/[&<>"']/g, c => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#39;"
+    }[c]));
 }
 
-function getProductField(product, possibleNames) {
-    for (const possibleName of possibleNames) {
-        const actualKey = Object.keys(product).find(
-            key => key.toLowerCase() === possibleName.toLowerCase()
-        );
 
-        if (actualKey !== undefined) {
-            const value = product[actualKey];
+/* =========================
+   FIRESTORE QUERY
+========================= */
 
-            if (
-                value !== undefined &&
-                value !== null &&
-                String(value).trim() !== "" &&
-                String(value).toLowerCase() !== "undefined" &&
-                String(value).toLowerCase() !== "null"
-            ) {
-                return value;
-            }
+async function queryCollection(collection, userId) {
+    const r = await fetch(
+        `${FIRESTORE}:runQuery?key=${API_KEY}`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                structuredQuery: {
+                    from: [
+                        {
+                            collectionId: collection
+                        }
+                    ],
+                    where: {
+                        fieldFilter: {
+                            field: {
+                                fieldPath: "userId"
+                            },
+                            op: "EQUAL",
+                            value: str(userId)
+                        }
+                    }
+                }
+            })
         }
+    );
+
+    if (!r.ok) {
+        throw Error(`Fetch ${collection} failed`);
     }
 
-    return null;
-}
-
-// --------------------------------------------------
-// FETCH PRODUCTS
-// --------------------------------------------------
-
-async function fetchProducts() {
-    try {
-        const response = await fetch(
-            `${FIRESTORE_URL}/Products?key=${API_KEY}`
-        );
-
-        if (!response.ok) {
-            throw new Error("Unable to fetch products from Firestore");
-        }
-
-        const data = await response.json();
-
-        products = (data.documents || []).map(doc => ({
-            id: doc.name.split("/").pop(),
-            ...decodeFirestoreFields(doc.fields || {})
+    return (await r.json())
+        .filter(x => x.document)
+        .map(x => ({
+            documentId: x.document.name.split("/").pop(),
+            ...decodeFields(x.document.fields)
         }));
-
-        console.log("Checkout products:", products);
-
-        renderCheckout();
-
-    } catch (error) {
-        console.error("Error fetching products:", error);
-
-        checkoutItems.innerHTML =
-            `<p class="cart-error">Unable to load products. Please refresh.</p>`;
-
-        placeOrderBtn.disabled = true;
-    }
 }
 
-// --------------------------------------------------
-// RENDER CHECKOUT ITEMS
-// --------------------------------------------------
 
-function renderCheckout() {
-    checkoutItems.innerHTML = "";
+/* =========================
+   STATE VARIABLES
+========================= */
+
+let products = [];
+let addresses = [];
+let chosenAddress = null;
+let editId = null;
+
+let subtotal = 0;
+let shipping = 0;
+let total = 0;
+
+let busy = false;
+
+
+/* =========================
+   DOM ELEMENTS
+========================= */
+
+const addressSection = $("savedAddressesSection");
+const addressCards = $("savedAddresses");
+
+const form = $("addressForm");
+const saveBtn = $("saveAddressBtn");
+const placeBtn = $("placeOrderBtn");
+
+
+/* =========================
+   PRODUCT HELPERS
+========================= */
+
+function getProdName(p) {
+    return p.productName ||
+        p.name ||
+        p.title ||
+        p.product_title ||
+        "Product";
+}
+
+function getPrice(p) {
+    return Number(
+        p.price ??
+        p.productPrice ??
+        p.sellingPrice ??
+        0
+    ) || 0;
+}
+
+
+/* =========================
+   ORDER SUMMARY
+========================= */
+
+function renderSummary() {
+    const host = $("checkoutItems");
+
+    host.innerHTML = "";
     subtotal = 0;
-    missingProducts = false;
 
-    if (cart.length === 0) {
-        checkoutItems.innerHTML = "<p>Your cart is empty.</p>";
-        placeOrderBtn.disabled = true;
+    let unavailable = false;
+
+    if (!cart.length) {
+        host.innerHTML = "<p>Your cart is empty.</p>";
+        placeBtn.disabled = true;
         return;
     }
 
-    cart.forEach(cartItem => {
-        const product = products.find(
-            p => p.id === cartItem.productId
+    cart.forEach(it => {
+        const p = products.find(
+            x => x.id === it.productId || x.productId === it.productId
         );
 
-        if (!product) {
-            missingProducts = true;
+        if (!p) {
+            unavailable = true;
 
-            checkoutItems.innerHTML += `
-                <div class="checkout-item">
-                    <div class="checkout-item-info">
-                        <h3>Product unavailable</h3>
-                        <p>Item could not be loaded from the catalog.</p>
-                    </div>
-                </div>
-            `;
+            host.insertAdjacentHTML(
+                "beforeend",
+                "<div class='checkout-item'><p>Unavailable item</p></div>"
+            );
 
             return;
         }
 
-        const productName = getProductField(product, [
-            "name",
-            "productName",
-            "product_name",
-            "productTitle",
-            "product_title",
-            "title",
-            "itemName"
-        ]) || `Product ${product.id}`;
+        const q = Math.max(1, Number(it.quantity) || 1);
+        const line = getPrice(p) * q;
 
-        const price = Number(
-            getProductField(product, [
-                "price",
-                "productPrice",
-                "product_price",
-                "sellingPrice",
-                "selling_price"
-            ])
-        ) || 0;
+        subtotal += line;
 
-        const quantity = Number(cartItem.quantity) || 1;
-        const itemTotal = price * quantity;
+        host.insertAdjacentHTML(
+            "beforeend",
+            `
+                <div class="checkout-item">
+                    <div class="checkout-item-info">
+                        <h3>${esc(getProdName(p))}</h3>
+                        <p>Qty: ${q}</p>
+                    </div>
 
-        subtotal += itemTotal;
-
-        checkoutItems.innerHTML += `
-            <div class="checkout-item">
-                <div class="checkout-item-info">
-                    <h3>${escapeHTML(productName)}</h3>
-                    <p>Qty: ${quantity}</p>
+                    <div class="checkout-item-price">
+                        ₹${line.toLocaleString("en-IN")}
+                    </div>
                 </div>
-
-                <div class="checkout-item-price">
-                    ₹${itemTotal.toLocaleString("en-IN")}
-                </div>
-            </div>
-        `;
+            `
+        );
     });
 
     shipping = subtotal >= 999 ? 0 : 50;
     total = subtotal + shipping;
 
-    checkoutSubtotal.textContent =
+    $("checkoutSubtotal").textContent =
         `₹${subtotal.toLocaleString("en-IN")}`;
 
-    checkoutShipping.textContent =
+    $("checkoutShipping").textContent =
         shipping === 0 ? "FREE" : `₹${shipping}`;
 
-    checkoutTotal.textContent =
+    $("checkoutTotal").textContent =
         `₹${total.toLocaleString("en-IN")}`;
 
-    placeOrderBtn.disabled =
-        !selectedAddress || missingProducts;
+    placeBtn.disabled = !chosenAddress || unavailable || busy;
 }
 
-// --------------------------------------------------
-// FETCH SAVED ADDRESSES
-// --------------------------------------------------
 
-async function fetchSavedAddresses() {
+/* =========================
+   SAVED ADDRESSES
+========================= */
+
+function renderAddresses() {
+    if (!addresses.length) {
+        addressSection.style.display = "none";
+        form.style.display = "block";
+        return;
+    }
+
+    addressSection.style.display = "block";
+
+    if (!editId) {
+        form.style.display = "none";
+    }
+
+    addressCards.innerHTML = addresses.map(a => `
+        <div
+            class="saved-address-card ${
+                chosenAddress?.documentId === a.documentId ? "selected" : ""
+            }"
+            data-address="${esc(a.documentId)}"
+        >
+            <label>
+                <input
+                    type="radio"
+                    name="selectedAddress"
+                    ${
+                        chosenAddress?.documentId === a.documentId
+                            ? "checked"
+                            : ""
+                    }
+                >
+
+                <strong>${esc(a.fullName)}</strong>
+
+                <span class="address-type-badge">
+                    ${esc(a.addressType || "Address")}
+                </span>
+            </label>
+
+            <p>
+                ${esc(a.phone)}<br>
+                ${esc(a.addressLine)}
+                ${a.landmark ? "<br>" + esc(a.landmark) : ""}
+                <br>
+                ${esc(a.city)}, ${esc(a.state)} - ${esc(a.pincode)}
+            </p>
+
+            <div class="saved-address-actions">
+                <button type="button" data-edit="${esc(a.documentId)}">
+                    Edit
+                </button>
+
+                <button type="button" data-delete="${esc(a.documentId)}">
+                    Delete
+                </button>
+            </div>
+        </div>
+    `).join("");
+
+    /* Select Address */
+    addressCards.querySelectorAll("[data-address]").forEach(card => {
+        card.onclick = () => {
+            if (editId) return;
+
+            chosenAddress = addresses.find(
+                a => a.documentId === card.dataset.address
+            );
+
+            sessionStorage.setItem(
+                "veloraCheckoutAddress",
+                JSON.stringify(chosenAddress)
+            );
+
+            renderAddresses();
+            renderSummary();
+        };
+    });
+
+    /* Edit Address */
+    addressCards.querySelectorAll("[data-edit]").forEach(b => {
+        b.onclick = e => {
+            e.stopPropagation();
+
+            editAddress(
+                addresses.find(a => a.documentId === b.dataset.edit)
+            );
+        };
+    });
+
+    /* Delete Address */
+    addressCards.querySelectorAll("[data-delete]").forEach(b => {
+        b.onclick = e => {
+            e.stopPropagation();
+
+            deleteAddress(
+                addresses.find(a => a.documentId === b.dataset.delete)
+            );
+        };
+    });
+}
+
+
+/* =========================
+   EDIT ADDRESS
+========================= */
+
+function editAddress(a) {
+    editId = a.documentId;
+
+    [
+        "fullName",
+        "phone",
+        "addressLine",
+        "landmark",
+        "city",
+        "state",
+        "pincode",
+        "addressType"
+    ].forEach(k => {
+        $(k).value = a[k] || "";
+    });
+
+    form.style.display = "block";
+    saveBtn.textContent = "Update Address";
+
+    addCancel();
+
+    form.scrollIntoView({
+        behavior: "smooth"
+    });
+}
+
+
+/* =========================
+   CANCEL ADDRESS EDIT
+========================= */
+
+function addCancel() {
+    document.getElementById("cancelAddressEdit")?.remove();
+
+    const b = document.createElement("button");
+
+    b.type = "button";
+    b.id = "cancelAddressEdit";
+    b.className = "add-address-button";
+    b.textContent = "Cancel";
+
+    saveBtn.after(b);
+
+    b.onclick = () => {
+        editId = null;
+
+        form.reset();
+        form.style.display = "none";
+
+        b.remove();
+
+        saveBtn.textContent = "Save Delivery Address";
+
+        renderAddresses();
+    };
+}
+
+
+/* =========================
+   DELETE ADDRESS
+========================= */
+
+async function deleteAddress(a) {
+    if (!confirm("Delete this saved address?")) return;
+
+    const r = await fetch(
+        `${FIRESTORE}/Addresses/${a.documentId}?key=${API_KEY}`,
+        {
+            method: "DELETE"
+        }
+    );
+
+    if (!r.ok) {
+        alert("Could not delete address.");
+        return;
+    }
+
+    addresses = addresses.filter(
+        x => x.documentId !== a.documentId
+    );
+
+    if (chosenAddress?.documentId === a.documentId) {
+        chosenAddress = addresses[0] || null;
+
+        if (chosenAddress) {
+            sessionStorage.setItem(
+                "veloraCheckoutAddress",
+                JSON.stringify(chosenAddress)
+            );
+        } else {
+            sessionStorage.removeItem("veloraCheckoutAddress");
+        }
+    }
+
+    renderAddresses();
+    renderSummary();
+}
+
+
+/* =========================
+   ADD NEW ADDRESS BUTTON
+========================= */
+
+$("addNewAddressBtn").onclick = () => {
+    editId = null;
+
+    form.reset();
+    form.style.display = "block";
+
+    saveBtn.textContent = "Save Delivery Address";
+
+    document.getElementById("cancelAddressEdit")?.remove();
+
+    form.scrollIntoView({
+        behavior: "smooth"
+    });
+};
+
+
+/* =========================
+   SAVE / UPDATE ADDRESS
+========================= */
+
+form.addEventListener("submit", async e => {
+    e.preventDefault();
+
+    const a = {
+        fullName: $("fullName").value.trim(),
+        phone: $("phone").value.trim(),
+        addressLine: $("addressLine").value.trim(),
+        landmark: $("landmark").value.trim(),
+        city: $("city").value.trim(),
+        state: $("state").value.trim(),
+        pincode: $("pincode").value.trim(),
+        addressType: $("addressType").value,
+        userId: user.userId || user.documentId,
+        createdAt: new Date().toISOString()
+    };
+
+    if (
+        !/^[0-9]{10}$/.test(a.phone) ||
+        !/^[0-9]{6}$/.test(a.pincode)
+    ) {
+        alert("Enter a valid 10-digit phone and 6-digit PIN code.");
+        return;
+    }
+
+    saveBtn.disabled = true;
+
     try {
-        const userId = user.userId || user.documentId;
+        const fields = {};
 
+        Object.entries(a).forEach(([k, v]) => {
+            fields[k] = str(v);
+        });
+
+        let r;
+
+        if (editId) {
+            const old = addresses.find(
+                x => x.documentId === editId
+            );
+
+            fields.createdAt = str(old?.createdAt || a.createdAt);
+
+            r = await fetch(
+                `${FIRESTORE}/Addresses/${editId}?key=${API_KEY}`,
+                {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        fields
+                    })
+                }
+            );
+
+            a.documentId = editId;
+
+        } else {
+            r = await fetch(
+                `${FIRESTORE}/Addresses?key=${API_KEY}`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        fields
+                    })
+                }
+            );
+
+            const doc = await r.json();
+
+            a.documentId = doc.name.split("/").pop();
+        }
+
+        if (!r.ok) {
+            throw Error("Address save failed");
+        }
+
+        if (editId) {
+            addresses = addresses.map(
+                x => x.documentId === editId ? a : x
+            );
+        } else {
+            addresses.push(a);
+        }
+
+        chosenAddress = a;
+
+        sessionStorage.setItem(
+            "veloraCheckoutAddress",
+            JSON.stringify(a)
+        );
+
+        editId = null;
+
+        form.reset();
+        form.style.display = "none";
+
+        document.getElementById("cancelAddressEdit")?.remove();
+
+        saveBtn.textContent = "Save Delivery Address";
+
+        renderAddresses();
+        renderSummary();
+
+        alert("Address saved.");
+
+    } catch (err) {
+        console.error(err);
+        alert("Unable to save address.");
+
+    } finally {
+        saveBtn.disabled = false;
+    }
+});
+
+
+/* =========================
+   PAYMENT METHOD
+========================= */
+
+$("paymentMethodRadios")?.addEventListener("change", () => {});
+
+document.querySelectorAll('input[name="paymentMethod"]').forEach(r => {
+    r.addEventListener("change", () => {
+        $("upiInstructions").hidden = r.value !== "UPI Manual";
+    });
+});
+
+
+/* =========================
+   PLACE ORDER
+========================= */
+
+async function placeOrder() {
+    if (busy) return;
+
+    if (!chosenAddress) {
+        alert("Select or save a delivery address first.");
+        return;
+    }
+
+    const method =
+        document.querySelector('input[name="paymentMethod"]:checked')?.value ||
+        "Cash on Delivery";
+
+    if (
+        method === "UPI Manual" &&
+        STORE_UPI_ID === "CONFIGURE_STORE_UPI_ID"
+    ) {
+        alert(
+            "UPI ID is not configured yet. Choose Cash on Delivery, or set STORE_UPI_ID in js/checkout.js."
+        );
+
+        return;
+    }
+
+    busy = true;
+
+    placeBtn.disabled = true;
+    placeBtn.textContent = "Placing order...";
+
+    try {
+        const orderId = "VEL-" + Date.now().toString().slice(-8);
+        const createdAt = new Date().toISOString();
+
+        const items = cart.map(it => {
+            const p = products.find(
+                x => x.id === it.productId || x.productId === it.productId
+            );
+
+            return {
+                productId: it.productId,
+                name: getProdName(p),
+                price: getPrice(p),
+                quantity: Number(it.quantity) || 1,
+                itemTotal: getPrice(p) * (Number(it.quantity) || 1)
+            };
+        });
+
+        const status = "Placed";
+
+        const orderFields = {
+            orderId: str(orderId),
+            userId: str(user.userId || user.documentId),
+            customerName: str(user.name || chosenAddress.fullName),
+            customerEmail: str(user.email || ""),
+
+            items: arr(
+                items.map(i => map({
+                    productId: str(i.productId),
+                    name: str(i.name),
+                    price: num(i.price),
+                    quantity: num(i.quantity),
+                    itemTotal: num(i.itemTotal)
+                }))
+            ),
+
+            address: map(
+                Object.fromEntries(
+                    Object.entries(chosenAddress)
+                        .filter(([k]) => k !== "documentId")
+                        .map(([k, v]) => [k, str(v)])
+                )
+            ),
+
+            subtotal: num(subtotal),
+            shipping: num(shipping),
+            total: num(total),
+
+            status: str(status),
+            paymentMethod: str(method),
+
+            paymentStatus: str(
+                method === "Cash on Delivery"
+                    ? "Pay on delivery"
+                    : "Pending manual verification"
+            ),
+
+            upiReference: str(
+                $("upiReference")?.value.trim() || ""
+            ),
+
+            createdAt: str(createdAt),
+
+            statusHistory: arr([
+                map({
+                    status: str(status),
+                    date: str(createdAt),
+                    note: str("Order placed successfully")
+                })
+            ])
+        };
+
+        /* Save Order to Firestore */
         const response = await fetch(
-            `${FIRESTORE_URL}:runQuery?key=${API_KEY}`,
+            `${FIRESTORE}/Orders?key=${API_KEY}`,
             {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    structuredQuery: {
-                        from: [
-                            {
-                                collectionId: "Addresses"
-                            }
-                        ],
-                        where: {
-                            fieldFilter: {
-                                field: {
-                                    fieldPath: "userId"
-                                },
-                                op: "EQUAL",
-                                value: {
-                                    stringValue: userId
-                                }
-                            }
-                        }
-                    }
+                    fields: orderFields
                 })
             }
         );
 
         if (!response.ok) {
-            throw new Error("Unable to fetch saved addresses");
+            console.error(await response.text());
+            throw Error("Order save failed");
         }
 
-        const data = await response.json();
+        const saved = await response.json();
 
-        savedAddresses = data
-            .filter(item => item.document)
-            .map(item => ({
-                documentId: item.document.name.split("/").pop(),
-                ...decodeFirestoreFields(item.document.fields || {})
-            }));
+        /* Store Last Order */
+        sessionStorage.setItem(
+            "veloraLastOrder",
+            JSON.stringify({
+                documentId: saved.name.split("/").pop(),
+                orderId,
+                userId: user.userId || user.documentId,
+                items,
+                address: chosenAddress,
+                subtotal,
+                shipping,
+                total,
+                status,
+                paymentMethod: method,
 
-        console.log("Saved addresses:", savedAddresses);
+                paymentStatus:
+                    method === "Cash on Delivery"
+                        ? "Pay on delivery"
+                        : "Pending manual verification",
 
-        // Restore previous selection
-        const previousAddress = JSON.parse(
-            sessionStorage.getItem("veloraCheckoutAddress") || "null"
+                createdAt
+            })
         );
 
-        if (previousAddress) {
-            selectedAddress = savedAddresses.find(
-                address =>
-                    address.documentId === previousAddress.documentId
-            ) || null;
-        }
-
-        // Select first address if no previous selection
-        if (!selectedAddress && savedAddresses.length > 0) {
-            selectedAddress = savedAddresses[0];
-
-            sessionStorage.setItem(
-                "veloraCheckoutAddress",
-                JSON.stringify(selectedAddress)
-            );
-        }
-
-        renderSavedAddresses();
-        renderCheckout();
-
-    } catch (error) {
-        console.error("Error fetching saved addresses:", error);
-
-        savedAddresses = [];
-        selectedAddress = null;
-
-        savedAddressesSection.style.display = "none";
-        addressForm.style.display = "block";
-
-        renderCheckout();
-    }
-}
-
-// --------------------------------------------------
-// RENDER SAVED ADDRESS CARDS
-// --------------------------------------------------
-
-function renderSavedAddresses() {
-    if (savedAddresses.length === 0) {
-        savedAddressesSection.style.display = "none";
-        addressForm.style.display = "block";
-        return;
-    }
-
-    savedAddressesSection.style.display = "block";
-
-    if (!editingAddressId) {
-        addressForm.style.display = "none";
-    }
-
-    savedAddressesContainer.innerHTML = "";
-
-    savedAddresses.forEach(address => {
-        const isSelected =
-            selectedAddress &&
-            selectedAddress.documentId === address.documentId;
-
-        const card = document.createElement("div");
-
-        card.className =
-            `saved-address-card ${isSelected ? "selected" : ""}`;
-
-        card.innerHTML = `
-            <label>
-                <input
-                    type="radio"
-                    name="selectedAddress"
-                    ${isSelected ? "checked" : ""}
-                >
-
-                <strong>${escapeHTML(address.fullName)}</strong>
-
-                <span class="address-type-badge">
-                    ${escapeHTML(address.addressType || "Address")}
-                </span>
-            </label>
-
-            <p>
-                ${escapeHTML(address.phone)}<br>
-                ${escapeHTML(address.addressLine)}<br>
-                ${address.landmark
-                    ? escapeHTML(address.landmark) + "<br>"
-                    : ""}
-                ${escapeHTML(address.city)},
-                ${escapeHTML(address.state)} -
-                ${escapeHTML(address.pincode)}
-            </p>
-
-            <div class="saved-address-actions">
-                <button
-                    type="button"
-                    class="edit-address-button"
-                >
-                    Edit
-                </button>
-
-                <button
-                    type="button"
-                    class="delete-address-button"
-                >
-                    Delete
-                </button>
-            </div>
-        `;
-
-        // Edit button
-        card.querySelector(".edit-address-button")
-            .addEventListener("click", function (e) {
-                e.stopPropagation();
-                editAddress(address);
-            });
-
-        // Delete button
-        card.querySelector(".delete-address-button")
-            .addEventListener("click", function (e) {
-                e.stopPropagation();
-                deleteAddress(address);
-            });
-
-        // Select address
-        card.addEventListener("click", function () {
-            if (editingAddressId) return;
-
-            selectedAddress = address;
-
-            sessionStorage.setItem(
-                "veloraCheckoutAddress",
-                JSON.stringify(address)
-            );
-
-            renderSavedAddresses();
-            renderCheckout();
-        });
-
-        savedAddressesContainer.appendChild(card);
-    });
-}
-
-// --------------------------------------------------
-// ADD NEW ADDRESS
-// --------------------------------------------------
-
-addNewAddressBtn.addEventListener("click", function () {
-    editingAddressId = null;
-
-    addressForm.reset();
-    addressForm.style.display = "block";
-
-    saveAddressBtn.textContent = "Save Delivery Address";
-
-    removeCancelEditButton();
-
-    addressForm.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-    });
-});
-
-// --------------------------------------------------
-// CANCEL EDIT BUTTON
-// --------------------------------------------------
-
-function removeCancelEditButton() {
-    const existingButton = document.getElementById("cancelEditAddressBtn");
-
-    if (existingButton) {
-        existingButton.remove();
-    }
-}
-
-function createCancelEditButton() {
-    removeCancelEditButton();
-
-    const cancelButton = document.createElement("button");
-
-    cancelButton.type = "button";
-    cancelButton.id = "cancelEditAddressBtn";
-    cancelButton.textContent = "Cancel";
-    cancelButton.className = "add-address-button";
-
-    saveAddressBtn.insertAdjacentElement("afterend", cancelButton);
-
-    cancelButton.addEventListener("click", function () {
-        editingAddressId = null;
-
-        addressForm.reset();
-        addressForm.style.display = "none";
-
-        saveAddressBtn.textContent = "Save Delivery Address";
-
-        removeCancelEditButton();
-
-        renderSavedAddresses();
-    });
-}
-
-// --------------------------------------------------
-// EDIT ADDRESS
-// --------------------------------------------------
-
-function editAddress(address) {
-    editingAddressId = address.documentId;
-
-    document.getElementById("fullName").value =
-        address.fullName || "";
-
-    document.getElementById("phone").value =
-        address.phone || "";
-
-    document.getElementById("addressLine").value =
-        address.addressLine || "";
-
-    document.getElementById("landmark").value =
-        address.landmark || "";
-
-    document.getElementById("city").value =
-        address.city || "";
-
-    document.getElementById("state").value =
-        address.state || "";
-
-    document.getElementById("pincode").value =
-        address.pincode || "";
-
-    document.getElementById("addressType").value =
-        address.addressType || "Home";
-
-    addressForm.style.display = "block";
-
-    saveAddressBtn.textContent = "Update Address";
-
-    createCancelEditButton();
-
-    addressForm.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-    });
-}
-
-// --------------------------------------------------
-// DELETE ADDRESS
-// --------------------------------------------------
-
-async function deleteAddress(address) {
-    const confirmDelete = confirm(
-        `Are you sure you want to delete this address?\n\n${address.addressLine}, ${address.city}`
-    );
-
-    if (!confirmDelete) return;
-
-    try {
-        const response = await fetch(
-            `${FIRESTORE_URL}/Addresses/${address.documentId}?key=${API_KEY}`,
-            {
-                method: "DELETE"
-            }
-        );
-
-        if (!response.ok) {
-            throw new Error("Failed to delete address");
-        }
-
-        savedAddresses = savedAddresses.filter(
-            item => item.documentId !== address.documentId
-        );
-
-        // If deleted address was selected, select another
-        if (
-            selectedAddress &&
-            selectedAddress.documentId === address.documentId
-        ) {
-            selectedAddress = savedAddresses.length > 0
-                ? savedAddresses[0]
-                : null;
-
-            if (selectedAddress) {
-                sessionStorage.setItem(
-                    "veloraCheckoutAddress",
-                    JSON.stringify(selectedAddress)
-                );
-            } else {
-                sessionStorage.removeItem("veloraCheckoutAddress");
-            }
-        }
-
-        renderSavedAddresses();
-        renderCheckout();
-
-        alert("Address deleted successfully!");
-
-    } catch (error) {
-        console.error("Delete address error:", error);
-        alert("Unable to delete address. Please try again.");
-    }
-}
-
-// --------------------------------------------------
-// SAVE / UPDATE ADDRESS
-// --------------------------------------------------
-
-addressForm.addEventListener("submit", async function (e) {
-    e.preventDefault();
-
-    if (!user) {
-        alert("Please login to continue checkout.");
-        window.location.href = "login.html";
-        return;
-    }
-
-    const address = {
-        fullName: document.getElementById("fullName").value.trim(),
-        phone: document.getElementById("phone").value.trim(),
-        addressLine: document.getElementById("addressLine").value.trim(),
-        landmark: document.getElementById("landmark").value.trim(),
-        city: document.getElementById("city").value.trim(),
-        state: document.getElementById("state").value.trim(),
-        pincode: document.getElementById("pincode").value.trim(),
-        addressType: document.getElementById("addressType").value,
-        userId: user.userId || user.documentId,
-        createdAt: new Date().toISOString()
-    };
-
-    saveAddressBtn.disabled = true;
-    saveAddressBtn.textContent =
-        editingAddressId ? "Updating address..." : "Saving address...";
-
-    try {
-        const fields = {
-            userId: { stringValue: address.userId },
-            fullName: { stringValue: address.fullName },
-            phone: { stringValue: address.phone },
-            addressLine: { stringValue: address.addressLine },
-            landmark: { stringValue: address.landmark },
-            city: { stringValue: address.city },
-            state: { stringValue: address.state },
-            pincode: { stringValue: address.pincode },
-            addressType: { stringValue: address.addressType },
-            createdAt: { stringValue: address.createdAt }
-        };
-
-        let response;
-        let documentId;
-
-        // UPDATE EXISTING ADDRESS
-        if (editingAddressId) {
-            const oldAddress = savedAddresses.find(
-                item => item.documentId === editingAddressId
-            );
-
-            address.createdAt = oldAddress?.createdAt || address.createdAt;
-
-            fields.createdAt = {
-                stringValue: address.createdAt
-            };
-
-            response = await fetch(
-                `${FIRESTORE_URL}/Addresses/${editingAddressId}?key=${API_KEY}`,
+        /* Clear Local Cart */
+        localStorage.removeItem("veloraCart");
+
+        /* Sync Cart Cleanup with Firestore */
+        try {
+            await fetch(
+                `${FIRESTORE}/Carts/${user.userId || user.documentId}?key=${API_KEY}`,
                 {
                     method: "PATCH",
                     headers: {
                         "Content-Type": "application/json"
                     },
-                    body: JSON.stringify({ fields })
+                    body: JSON.stringify({
+                        fields: {
+                            items: arr([]),
+                            updatedAt: str(new Date().toISOString())
+                        }
+                    })
                 }
             );
 
-            documentId = editingAddressId;
-
-        } else {
-            // CREATE NEW ADDRESS
-            response = await fetch(
-                `${FIRESTORE_URL}/Addresses?key=${API_KEY}`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ fields })
-                }
-            );
+        } catch (e) {
+            console.warn("Cart sync cleanup failed", e);
         }
 
-        if (!response.ok) {
-            const errorData = await response.json();
+        /* Redirect to Success Page */
+        location.href = "order-success.html";
 
-            console.error("Firestore address error:", errorData);
+    } catch (err) {
+        console.error(err);
 
-            throw new Error("Failed to save address");
-        }
+        alert("Order failed to save. Please try again.");
 
-        const savedDocument = await response.json();
-
-        if (!editingAddressId) {
-            documentId = savedDocument.name.split("/").pop();
-        }
-
-        address.documentId = documentId;
-
-        // Update local address list
-        if (editingAddressId) {
-            savedAddresses = savedAddresses.map(item =>
-                item.documentId === editingAddressId
-                    ? address
-                    : item
-            );
-        } else {
-            savedAddresses.push(address);
-        }
-
-        selectedAddress = address;
-
-        sessionStorage.setItem(
-            "veloraCheckoutAddress",
-            JSON.stringify(address)
-        );
-
-        editingAddressId = null;
-
-        addressForm.reset();
-        addressForm.style.display = "none";
-
-        saveAddressBtn.textContent = "Save Delivery Address";
-
-        removeCancelEditButton();
-
-        renderSavedAddresses();
-        renderCheckout();
-
-        alert("Address saved successfully!");
-
-    } catch (error) {
-        console.error("Address save/update error:", error);
-
-        alert("Unable to save address. Please try again.");
-
-    } finally {
-        saveAddressBtn.disabled = false;
-
-        if (!editingAddressId) {
-            saveAddressBtn.textContent = "Save Delivery Address";
-        }
+        busy = false;
+        placeBtn.disabled = false;
+        placeBtn.textContent = "Place Order";
     }
-});
+}
 
-// --------------------------------------------------
-// CONTINUE TO PAYMENT
-// --------------------------------------------------
 
-placeOrderBtn.addEventListener("click", function () {
-    if (!selectedAddress) {
-        alert("Please select or save a delivery address first.");
+/* =========================
+   PLACE ORDER BUTTON
+========================= */
+
+placeBtn.addEventListener("click", placeOrder);
+
+
+/* =========================
+   INITIALIZATION
+========================= */
+
+async function init() {
+    if (!user) {
+        alert("Please log in to checkout.");
+        location.href = "login.html";
         return;
     }
 
-    sessionStorage.setItem(
-        "veloraCheckoutAddress",
-        JSON.stringify(selectedAddress)
-    );
+    try {
+        /* Load Products */
+        const pr = await fetch(
+            `${FIRESTORE}/Products?pageSize=1000&key=${API_KEY}`
+        );
 
-    alert("Delivery address confirmed! Payment step will be added next.");
-});
+        if (!pr.ok) {
+            throw Error("Products load error");
+        }
 
-// --------------------------------------------------
-// LOGIN CHECK & INITIALIZATION
-// --------------------------------------------------
+        products = (await pr.json()).documents || [];
 
-if (!user) {
-    alert("Please login to continue checkout.");
-    window.location.href = "login.html";
-} else {
-    fetchProducts();
-    fetchSavedAddresses();
+        products = products.map(d => ({
+            id: d.name.split("/").pop(),
+            ...decodeFields(d.fields)
+        }));
+
+        renderSummary();
+
+        /* Load User Addresses */
+        addresses = await queryCollection(
+            "Addresses",
+            user.userId || user.documentId
+        );
+
+        /* Restore Previously Selected Address */
+        const saved = JSON.parse(
+            sessionStorage.getItem("veloraCheckoutAddress") || "null"
+        );
+
+        chosenAddress = saved
+            ? addresses.find(x => x.documentId === saved.documentId) || null
+            : addresses[0] || null;
+
+        renderAddresses();
+        renderSummary();
+
+    } catch (e) {
+        console.error(e);
+
+        alert("Checkout data failed to load. Refresh and try again.");
+    }
 }
+
+
+/* =========================
+   START CHECKOUT
+========================= */
+
+init();

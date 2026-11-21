@@ -1,0 +1,162 @@
+/* =========================
+   VELORA MY ORDERS PAGE
+========================= */
+
+.feature-page {
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 0 20px;
+    color: #24231f;
+}
+
+
+/* =========================
+   PAGE TITLE
+========================= */
+
+.feature-page h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 2.25rem;
+    margin: 18px 0 8px;
+}
+
+
+/* =========================
+   PAGE HEADER
+========================= */
+
+.feature-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+}
+
+.feature-header a {
+    color: #a35f46;
+    text-decoration: none;
+    border: 1px solid #e9e4dd;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: #fff;
+}
+
+
+/* =========================
+   MUTED TEXT
+========================= */
+
+.feature-muted {
+    color: #77736d;
+    margin-bottom: 26px;
+}
+
+
+/* =========================
+   ORDER CARD
+========================= */
+
+.feature-card {
+    background: #fff;
+    border: 1px solid #eee8e2;
+    border-radius: 14px;
+    padding: 20px;
+    margin: 14px 0;
+}
+
+
+/* =========================
+   ORDER STATUS
+========================= */
+
+.order-status {
+    display: inline-block;
+    background: #f5eee9;
+    color: #874b35;
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 0.9rem;
+}
+
+
+/* =========================
+   ORDER TRACKING
+========================= */
+
+.tracking-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 18px 0;
+}
+
+.tracking-step {
+    border: 1px solid #eee8e2;
+    border-radius: 9px;
+    padding: 9px 12px;
+    color: #999;
+    background: #fff;
+}
+
+.tracking-step.done {
+    border-color: #a35f46;
+    background: #faf4f0;
+    color: #874b35;
+    font-weight: 600;
+}
+
+
+/* =========================
+   ORDER ITEM DETAILS
+========================= */
+
+.order-item-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid #f1ece7;
+    padding: 9px 0;
+}
+
+
+/* =========================
+   EMPTY STATE
+========================= */
+
+.feature-empty {
+    padding: 30px;
+    text-align: center;
+    border: 1px dashed #ddd;
+    border-radius: 12px;
+    color: #77736d;
+}
+
+
+/* =========================
+   RESPONSIVE DESIGN
+========================= */
+
+@media (max-width: 600px) {
+    .feature-header {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .feature-page h1 {
+        font-size: 1.8rem;
+    }
+
+    .feature-card {
+        padding: 15px;
+    }
+
+    .tracking-steps {
+        gap: 6px;
+    }
+
+    .tracking-step {
+        font-size: 0.82rem;
+        padding: 7px 9px;
+    }
+}

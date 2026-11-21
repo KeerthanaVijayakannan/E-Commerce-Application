@@ -1,15 +1,37 @@
+/* =========================
+   CONFIGURATION
+========================= */
+
+const API_KEY = "AIzaSyAbnDfdwRBn8lPhXVw8xDq5MZEb2X0SK5M";
+
+const FIRESTORE_URL = `https://firestore.googleapis.com/v1/projects/e-commerce-b63d7/databases/(default)/documents/Products?pageSize=1000&key=${API_KEY}`;
+
+const FIRESTORE = `https://firestore.googleapis.com/v1/projects/e-commerce-b63d7/databases/(default)/documents`;
 
 
-const FIRESTORE_URL =
-    "https://firestore.googleapis.com/v1/projects/e-commerce-b63d7/databases/(default)/documents/Products?pageSize=1000&key=AIzaSyAbnDfdwRBn8lPhXVw8xDq5MZEb2X0SK5M";
+/* =========================
+   STATE VARIABLES
+========================= */
 
 let allProducts = [];
 let currentFilter = "all";
+let wishlistIds = new Set();
+
+
+/* =========================
+   DOM ELEMENTS
+========================= */
 
 const productsGrid = document.getElementById("productsGrid");
 const searchInput = document.getElementById("searchInput");
 const sortSelect = document.getElementById("sortSelect");
 const loadingMessage = document.getElementById("loadingMessage");
+const cartButton = document.getElementById("cartButton");
+
+
+/* =========================
+   CATEGORY DATA
+========================= */
 
 const categoryNames = {
     cat001: "Clothing",
@@ -27,179 +49,446 @@ const categoryEmojis = {
     cat005: "🧴"
 };
 
-// Extract Firestore typed values
-function getFieldValue(field) {
-    if (!field) return "";
 
-    return field.stringValue ??
-        field.integerValue ??
-        field.doubleValue ??
-        field.booleanValue ??
+/* =========================
+   FIRESTORE DATA HELPERS
+========================= */
+
+function getFieldValue(f) {
+    if (!f) return "";
+
+    return f.stringValue ??
+        f.integerValue ??
+        f.doubleValue ??
+        f.booleanValue ??
         "";
 }
 
-// Fetch products from Firestore REST API
+function decode(v) {
+    if (!v) return "";
+
+    if (v.stringValue !== undefined) return v.stringValue;
+    if (v.integerValue !== undefined) return Number(v.integerValue);
+    if (v.doubleValue !== undefined) return Number(v.doubleValue);
+    if (v.booleanValue !== undefined) return v.booleanValue;
+
+    if (v.arrayValue) {
+        return (v.arrayValue.values || []).map(decode);
+    }
+
+    if (v.mapValue) {
+        return decodeFields(v.mapValue.fields);
+    }
+
+    return "";
+}
+
+function decodeFields(f) {
+    const o = {};
+
+    Object.entries(f || {}).forEach(([k, v]) => {
+        o[k] = decode(v);
+    });
+
+    return o;
+}
+
+
+/* =========================
+   HTML ESCAPE HELPER
+========================= */
+
+function esc(v) {
+    return String(v ?? "").replace(/[&<>"']/g, c => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#039;"
+    }[c]));
+}
+
+
+/* =========================
+   LOAD WISHLIST
+========================= */
+
+async function loadWishlist() {
+    const u = JSON.parse(
+        sessionStorage.getItem("veloraUser") || "null"
+    );
+
+    if (!u) return;
+
+    try {
+        const r = await fetch(
+            `${FIRESTORE}/Wishlists/${u.userId || u.documentId}?key=${API_KEY}`
+        );
+
+        if (!r.ok) return;
+
+        const d = await r.json();
+
+        wishlistIds = new Set(
+            (decode(d.fields?.items) || [])
+                .map(x => x.productId)
+        );
+
+    } catch (e) {
+        console.warn("Wishlist load", e);
+    }
+}
+
+
+/* =========================
+   SAVE WISHLIST
+========================= */
+
+async function saveWishlist() {
+    const u = JSON.parse(
+        sessionStorage.getItem("veloraUser") || "null"
+    );
+
+    if (!u) {
+        localStorage.setItem(
+            "veloraWishlist",
+            JSON.stringify([...wishlistIds])
+        );
+
+        return;
+    }
+
+    const fields = {
+        userId: {
+            stringValue: u.userId || u.documentId
+        },
+
+        items: {
+            arrayValue: {
+                values: [...wishlistIds].map(id => ({
+                    mapValue: {
+                        fields: {
+                            productId: {
+                                stringValue: id
+                            },
+
+                            savedAt: {
+                                stringValue: new Date().toISOString()
+                            }
+                        }
+                    }
+                }))
+            }
+        },
+
+        updatedAt: {
+            stringValue: new Date().toISOString()
+        }
+    };
+
+    await fetch(
+        `${FIRESTORE}/Wishlists/${u.userId || u.documentId}?key=${API_KEY}`,
+        {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                fields
+            })
+        }
+    );
+}
+
+
+/* =========================
+   TOGGLE WISHLIST
+========================= */
+
+async function toggleWishlist(id) {
+    if (!sessionStorage.getItem("veloraUser")) {
+        alert("Login to save your wishlist.");
+        location.href = "login.html";
+        return;
+    }
+
+    if (wishlistIds.has(id)) {
+        wishlistIds.delete(id);
+    } else {
+        wishlistIds.add(id);
+    }
+
+    try {
+        await saveWishlist();
+        renderProducts();
+
+    } catch (e) {
+        alert("Wishlist update failed. Please retry.");
+    }
+}
+
+
+/* =========================
+   FETCH PRODUCTS
+========================= */
+
 async function fetchProducts() {
     try {
-        const response = await fetch(FIRESTORE_URL);
+        const r = await fetch(FIRESTORE_URL);
 
-        if (!response.ok) {
-            throw new Error("Firestore request failed: " + response.status);
+        if (!r.ok) {
+            throw Error(`Products fetch failed ${r.status}`);
         }
 
-        const data = await response.json();
+        const d = await r.json();
 
-        allProducts = (data.documents || []).map(document => {
-            const fields = document.fields || {};
+        allProducts = (d.documents || [])
+            .map(doc => {
+                const f = doc.fields || {};
 
-            return {
-                id: document.name.split("/").pop(),
-                productId: getFieldValue(fields.productId),
-                productName: getFieldValue(fields.productName),
-                categoryId: getFieldValue(fields.categoryId),
-                description: getFieldValue(fields.description),
-                price: Number(getFieldValue(fields.price)),
-                stock: Number(getFieldValue(fields.stock)),
-                status: getFieldValue(fields.status)
-            };
-        }).filter(product => product.status === "active");
+                return {
+                    id: doc.name.split("/").pop(),
+
+                    productId:
+                        getFieldValue(f.productId) ||
+                        doc.name.split("/").pop(),
+
+                    productName: getFieldValue(f.productName),
+                    categoryId: getFieldValue(f.categoryId),
+                    description: getFieldValue(f.description),
+                    price: Number(getFieldValue(f.price)),
+                    stock: Number(getFieldValue(f.stock)),
+                    status: getFieldValue(f.status)
+                };
+            })
+            .filter(p => p.status === "active");
 
         renderProducts();
-    } catch (error) {
-        console.error("Product loading error:", error);
+
+    } catch (e) {
+        console.error(e);
 
         productsGrid.innerHTML = `
             <div class="loading-message">
-                Unable to load products.<br>
-                Please check your connection and Firestore settings.
+                Unable to load products. Check connection and Firestore settings.
             </div>
         `;
     }
 }
 
-// Display products
+
+/* =========================
+   RENDER PRODUCTS
+========================= */
+
 function renderProducts() {
-    let filteredProducts = [...allProducts];
+    let list = [...allProducts];
 
-    // Category filter
+    /* Category Filter */
     if (currentFilter !== "all") {
-        filteredProducts = filteredProducts.filter(
-            product => product.categoryId === currentFilter
+        list = list.filter(
+            p => p.categoryId === currentFilter
         );
     }
 
-    // Search filter
-    const searchTerm = searchInput.value.trim().toLowerCase();
+    /* Search */
+    const term = searchInput.value.trim().toLowerCase();
 
-    if (searchTerm) {
-        filteredProducts = filteredProducts.filter(product =>
-            product.productName.toLowerCase().includes(searchTerm) ||
-            product.description.toLowerCase().includes(searchTerm)
+    if (term) {
+        list = list.filter(
+            p =>
+                p.productName.toLowerCase().includes(term) ||
+                p.description.toLowerCase().includes(term)
         );
     }
 
-    // Sorting
+    /* Sorting */
     switch (sortSelect.value) {
         case "low-high":
-            filteredProducts.sort((a, b) => a.price - b.price);
+            list.sort((a, b) => a.price - b.price);
             break;
 
         case "high-low":
-            filteredProducts.sort((a, b) => b.price - a.price);
+            list.sort((a, b) => b.price - a.price);
             break;
 
         case "name":
-            filteredProducts.sort((a, b) =>
-                a.productName.localeCompare(b.productName)
+            list.sort(
+                (a, b) => a.productName.localeCompare(b.productName)
             );
             break;
     }
 
-    if (filteredProducts.length === 0) {
+    /* Empty Results */
+    if (!list.length) {
         productsGrid.innerHTML = `
             <div class="loading-message">
                 No products found.
             </div>
         `;
+
         return;
     }
 
-    productsGrid.innerHTML = filteredProducts.map(product => `
+    /* Product Cards */
+    productsGrid.innerHTML = list.map(p => `
         <article class="product-card">
-            <div class="product-visual ${product.categoryId}">
+
+            <div class="product-visual ${esc(p.categoryId)}">
+
                 <span class="product-emoji">
-                    ${categoryEmojis[product.categoryId] || "🛍️"}
+                    ${categoryEmojis[p.categoryId] || "🛍️"}
                 </span>
+
                 <span class="product-category">
-                    ${categoryNames[product.categoryId] || "Collection"}
+                    ${categoryNames[p.categoryId] || "Collection"}
                 </span>
+
+                <button
+                    type="button"
+                    class="wishlist-toggle ${wishlistIds.has(p.productId) ? "saved" : ""}"
+                    data-wish="${esc(p.productId)}"
+                    aria-label="Wishlist"
+                    title="${wishlistIds.has(p.productId) ? "Remove from wishlist" : "Add to wishlist"}"
+                >
+                    ${wishlistIds.has(p.productId) ? "♥" : "♡"}
+                </button>
+
             </div>
 
             <div class="product-info">
+
                 <p class="product-category-label">
-                    ${categoryNames[product.categoryId] || ""}
+                    ${categoryNames[p.categoryId] || ""}
                 </p>
 
-                <h3>${escapeHTML(product.productName)}</h3>
+                <h3>
+                    ${esc(p.productName)}
+                </h3>
 
                 <p class="product-description">
-                    ${escapeHTML(product.description)}
+                    ${esc(p.description)}
                 </p>
 
                 <div class="product-bottom">
+
                     <span class="product-price">
-                        ₹${product.price.toLocaleString("en-IN")}
+                        ₹${p.price.toLocaleString("en-IN")}
                     </span>
 
-                    <button class="add-cart-btn"
-                        data-product-id="${escapeHTML(product.productId)}">
+                    <button
+                        class="add-cart-btn"
+                        data-product-id="${esc(p.productId)}"
+                    >
                         Add to cart +
                     </button>
+
                 </div>
+
             </div>
+
         </article>
     `).join("");
 
-    // Add-to-cart buttons
-    document.querySelectorAll(".add-cart-btn").forEach(button => {
-        button.addEventListener("click", () => {
-            addToCart(button.dataset.productId);
-        });
+    /* Add to Cart Button Events */
+    productsGrid.querySelectorAll(".add-cart-btn").forEach(b => {
+        b.onclick = () => addToCart(b.dataset.productId);
+    });
+
+    /* Wishlist Button Events */
+    productsGrid.querySelectorAll(".wishlist-toggle").forEach(b => {
+        b.onclick = () => toggleWishlist(b.dataset.wish);
     });
 }
 
-// Escape product text before inserting HTML
-function escapeHTML(value) {
-    return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+
+/* =========================
+   CART FUNCTIONS
+========================= */
+
+function getCart() {
+    return JSON.parse(
+        localStorage.getItem("veloraCart") || "[]"
+    );
 }
 
-// Category filter buttons
-document.querySelectorAll(".filter-btn").forEach(button => {
-    button.addEventListener("click", () => {
-        document.querySelectorAll(".filter-btn").forEach(btn => {
-            btn.classList.remove("active");
+function saveCart(c) {
+    localStorage.setItem(
+        "veloraCart",
+        JSON.stringify(c)
+    );
+
+    updateCartCount();
+}
+
+function addToCart(id) {
+    const c = getCart();
+
+    const item = c.find(
+        x => x.productId === id
+    );
+
+    if (item) {
+        item.quantity++;
+    } else {
+        c.push({
+            productId: id,
+            quantity: 1
+        });
+    }
+
+    saveCart(c);
+
+    alert("Product added to your cart!");
+}
+
+function updateCartCount() {
+    const c = getCart();
+
+    const n = c.reduce(
+        (s, x) => s + x.quantity,
+        0
+    );
+
+    const el = document.getElementById("cartCount");
+
+    if (el) {
+        el.textContent = n;
+    }
+}
+
+
+/* =========================
+   CATEGORY FILTER BUTTONS
+========================= */
+
+document.querySelectorAll(".filter-btn").forEach(b => {
+    b.addEventListener("click", () => {
+        document.querySelectorAll(".filter-btn").forEach(x => {
+            x.classList.remove("active");
         });
 
-        button.classList.add("active");
-        currentFilter = button.dataset.filter;
+        b.classList.add("active");
+
+        currentFilter = b.dataset.filter;
+
         renderProducts();
     });
 });
 
-// Category cards
-document.querySelectorAll(".category-card").forEach(button => {
-    button.addEventListener("click", () => {
-        currentFilter = button.dataset.category;
 
-        document.querySelectorAll(".filter-btn").forEach(btn => {
-            btn.classList.toggle(
+/* =========================
+   CATEGORY CARDS
+========================= */
+
+document.querySelectorAll(".category-card").forEach(b => {
+    b.addEventListener("click", () => {
+        currentFilter = b.dataset.category;
+
+        document.querySelectorAll(".filter-btn").forEach(x => {
+            x.classList.toggle(
                 "active",
-                btn.dataset.filter === currentFilter
+                x.dataset.filter === currentFilter
             );
         });
 
@@ -211,67 +500,66 @@ document.querySelectorAll(".category-card").forEach(button => {
     });
 });
 
-// Search
+
+/* =========================
+   SEARCH & SORT
+========================= */
+
 searchInput.addEventListener("input", renderProducts);
 
-// Sort
 sortSelect.addEventListener("change", renderProducts);
 
-// Cart using localStorage
-function getCart() {
-    return JSON.parse(localStorage.getItem("veloraCart") || "[]");
+
+/* =========================
+   CART NAVIGATION
+========================= */
+
+if (cartButton) {
+    cartButton.onclick = () => {
+        location.href = "cart.html";
+    };
 }
 
-function saveCart(cart) {
-    localStorage.setItem("veloraCart", JSON.stringify(cart));
-    updateCartCount();
-}
 
-function addToCart(productId) {
-    const cart = getCart();
-    const existingItem = cart.find(item => item.productId === productId);
+/* =========================
+   LOGIN & PROFILE LINKS
+========================= */
 
-    if (existingItem) {
-        existingItem.quantity++;
-    } else {
-        cart.push({
-            productId: productId,
-            quantity: 1
-        });
-    }
-
-    saveCart(cart);
-    alert("Product added to your cart!");
-}
-
-function updateCartCount() {
-    const cart = getCart();
-
-    const totalItems = cart.reduce(
-        (total, item) => total + item.quantity,
-        0
-    );
-
-    document.getElementById("cartCount").textContent = totalItems;
-}
-
-// Cart button (temporary summary)
-cartButton.addEventListener("click", () => {
-    window.location.href = "cart.html";
-});
-// Initial load
-updateCartCount();
-fetchProducts();
-// Update navbar based on login status
 const loginLink = document.getElementById("loginLink");
 const profileLink = document.getElementById("profileLink");
 
-const loggedInUser = sessionStorage.getItem("veloraUser");
+const user = JSON.parse(
+    sessionStorage.getItem("veloraUser") || "null"
+);
 
-if (loggedInUser) {
-    if (loginLink) loginLink.style.display = "none";
-    if (profileLink) profileLink.style.display = "inline-block";
+if (user) {
+    if (loginLink) {
+        loginLink.style.display = "none";
+    }
+
+    if (profileLink) {
+        profileLink.style.display = "inline-block";
+    }
+
 } else {
-    if (loginLink) loginLink.style.display = "inline-block";
-    if (profileLink) profileLink.style.display = "none";
+    if (loginLink) {
+        loginLink.style.display = "inline-block";
+    }
+
+    if (profileLink) {
+        profileLink.style.display = "none";
+    }
+
+    wishlistIds = new Set(
+        JSON.parse(localStorage.getItem("veloraWishlist") || "[]")
+    );
 }
+
+
+/* =========================
+   INITIALIZATION
+========================= */
+
+updateCartCount();
+
+loadWishlist().then(fetchProducts);

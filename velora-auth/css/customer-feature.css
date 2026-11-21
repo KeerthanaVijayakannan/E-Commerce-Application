@@ -1,0 +1,232 @@
+/* =========================
+   PAYMENT SECTION
+========================= */
+
+.payment-section {
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid #eee8e2;
+}
+
+/* PAYMENT OPTIONS */
+.payment-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 15px;
+    border: 1px solid #eee8e2;
+    border-radius: 10px;
+    margin: 10px 0;
+    cursor: pointer;
+}
+
+.payment-option input {
+    margin-top: 4px;
+    accent-color: #a35f46;
+}
+
+.payment-option span {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.payment-option small {
+    color: #77736d;
+    line-height: 1.5;
+}
+
+/* UPI INSTRUCTIONS */
+.upi-instructions {
+    background: #faf8f5;
+    border: 1px solid #eee8e2;
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 12px;
+}
+
+.upi-instructions input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+    margin-top: 8px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+/* =========================
+   SAVED ADDRESS
+========================= */
+
+.saved-address-card {
+    border: 1px solid #eee8e2;
+    padding: 16px;
+    border-radius: 10px;
+    margin: 12px 0;
+    cursor: pointer;
+}
+
+.saved-address-card.selected {
+    border-color: #a35f46;
+    background: #faf8f5;
+}
+
+.saved-address-card label {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* SAVED ADDRESS ACTIONS */
+.saved-address-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.saved-address-actions button {
+    background: transparent;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 7px 12px;
+    cursor: pointer;
+}
+
+/* =========================
+   FEATURE PAGE LAYOUT
+========================= */
+
+.feature-page {
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 0 20px;
+    color: #24231f;
+}
+
+/* PAGE TITLE */
+.feature-page h1 {
+    font-family: Georgia, serif;
+    font-size: 2.2rem;
+}
+
+/* PAGE HEADER */
+.feature-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+}
+
+.feature-header a,
+.feature-btn {
+    color: #a35f46;
+    text-decoration: none;
+    border: 1px solid #e9e4dd;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+}
+
+/* FEATURE CARD */
+.feature-card {
+    background: #fff;
+    border: 1px solid #eee8e2;
+    border-radius: 14px;
+    padding: 20px;
+    margin: 14px 0;
+}
+
+/* MUTED TEXT */
+.feature-muted {
+    color: #77736d;
+}
+
+/* =========================
+   WISHLIST
+========================= */
+
+.wishlist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 18px;
+}
+
+.wish-card {
+    border: 1px solid #eee8e2;
+    border-radius: 12px;
+    padding: 18px;
+    background: white;
+}
+
+.wish-card h3 {
+    margin: 10px 0;
+}
+
+.wish-heart {
+    border: 0;
+    background: transparent;
+    color: #a35f46;
+    font-size: 1.3rem;
+    cursor: pointer;
+}
+
+/* =========================
+   ORDER STATUS
+========================= */
+
+.order-status {
+    display: inline-block;
+    background: #f5eee9;
+    color: #874b35;
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 0.9rem;
+}
+
+/* =========================
+   ORDER TRACKING
+========================= */
+
+.tracking-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 18px 0;
+}
+
+.tracking-step {
+    border: 1px solid #eee8e2;
+    border-radius: 9px;
+    padding: 9px 12px;
+    color: #999;
+}
+
+.tracking-step.done {
+    border-color: #a35f46;
+    background: #faf4f0;
+    color: #874b35;
+    font-weight: 600;
+}
+
+/* ORDER ITEM DETAILS */
+.order-item-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid #f1ece7;
+    padding: 9px 0;
+}
+
+/* =========================
+   EMPTY STATE
+========================= */
+
+.feature-empty {
+    padding: 30px;
+    text-align: center;
+    border: 1px dashed #ddd;
+    border-radius: 12px;
+    color: #77736d;
+}

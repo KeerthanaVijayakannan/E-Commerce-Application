@@ -321,3 +321,23 @@ document.getElementById("checkoutButton").addEventListener("click", () => {
 });
 
 initializeCart();
+
+// Proceed to Checkout
+document.getElementById("checkoutButton").addEventListener("click", () => {
+    const cart = JSON.parse(localStorage.getItem("veloraCart")) || [];
+
+    if (cart.length === 0) {
+        alert("Your cart is empty!");
+        return;
+    }
+
+    const loggedInUser = sessionStorage.getItem("veloraUser");
+
+    if (!loggedInUser) {
+        alert("Please login to continue checkout.");
+        window.location.href = "login.html";
+        return;
+    }
+
+    window.location.href = "checkout.html";
+});

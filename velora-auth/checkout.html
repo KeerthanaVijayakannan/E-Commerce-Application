@@ -3,90 +3,248 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Checkout | Velora</title>
+
+    <!-- CSS -->
     <link rel="stylesheet" href="css/checkout.css">
+    <link rel="stylesheet" href="css/customer-features.css">
 </head>
+
 <body>
 
+    <!-- Header -->
     <header class="checkout-header">
         <a href="store.html" class="logo">VELORA</a>
+
         <span>Secure Checkout</span>
-        <a href="cart.html" class="back-cart">← Back to Cart</a>
+
+        <a href="cart.html" class="back-cart">
+            ← Back to Cart
+        </a>
     </header>
 
+    <!-- Checkout Layout -->
     <main class="checkout-container">
 
+        <!-- Left Section -->
         <section class="checkout-left">
+
             <h1>Checkout</h1>
             <p>Complete your order details below.</p>
 
+            <!-- Delivery Address -->
             <div class="checkout-section">
+
                 <h2>Delivery Address</h2>
 
+                <!-- Saved Addresses -->
+                <div id="savedAddressesSection" style="display:none">
+
+                    <h3 class="saved-address-heading">
+                        Your Saved Addresses
+                    </h3>
+
+                    <div id="savedAddresses"></div>
+
+                    <button
+                        type="button"
+                        id="addNewAddressBtn"
+                        class="add-address-button"
+                    >
+                        + Add New Address
+                    </button>
+
+                </div>
+
+                <!-- Address Form -->
                 <form id="addressForm">
 
                     <div class="form-group">
                         <label for="fullName">Full Name</label>
-                        <input type="text" id="fullName" required>
+
+                        <input
+                            type="text"
+                            id="fullName"
+                            required
+                        >
                     </div>
 
                     <div class="form-group">
                         <label for="phone">Phone Number</label>
-                        <input type="tel" id="phone" required>
+
+                        <input
+                            type="tel"
+                            id="phone"
+                            required
+                            pattern="[0-9]{10}"
+                            maxlength="10"
+                        >
                     </div>
 
                     <div class="form-group">
-                        <label for="addressLine">House No. / Street Address</label>
-                        <input type="text" id="addressLine" required>
+                        <label for="addressLine">
+                            House No. / Street Address
+                        </label>
+
+                        <input
+                            type="text"
+                            id="addressLine"
+                            required
+                        >
                     </div>
 
                     <div class="form-group">
                         <label for="landmark">Landmark (Optional)</label>
-                        <input type="text" id="landmark">
+
+                        <input
+                            type="text"
+                            id="landmark"
+                        >
                     </div>
 
+                    <!-- City and State -->
                     <div class="form-row">
+
                         <div class="form-group">
                             <label for="city">City</label>
-                            <input type="text" id="city" required>
+
+                            <input
+                                type="text"
+                                id="city"
+                                required
+                            >
                         </div>
 
                         <div class="form-group">
                             <label for="state">State</label>
-                            <input type="text" id="state" required>
+
+                            <input
+                                type="text"
+                                id="state"
+                                required
+                            >
                         </div>
+
                     </div>
 
+                    <!-- PIN Code and Address Type -->
                     <div class="form-row">
+
                         <div class="form-group">
                             <label for="pincode">PIN Code</label>
-                            <input type="text" id="pincode" maxlength="6" required>
+
+                            <input
+                                type="text"
+                                id="pincode"
+                                maxlength="6"
+                                required
+                                pattern="[0-9]{6}"
+                            >
                         </div>
 
                         <div class="form-group">
                             <label for="addressType">Address Type</label>
+
                             <select id="addressType" required>
-                                <option value="Home">Home</option>
-                                <option value="Work">Work</option>
-                                <option value="Other">Other</option>
+                                <option>Home</option>
+                                <option>Work</option>
+                                <option>Other</option>
                             </select>
                         </div>
+
                     </div>
 
-                    <button type="submit" id="saveAddressBtn">
+                    <!-- Save Address -->
+                    <button
+                        type="submit"
+                        id="saveAddressBtn"
+                    >
                         Save Delivery Address
                     </button>
 
                 </form>
+
             </div>
+
+            <!-- Payment Method -->
+            <div class="checkout-section payment-section">
+
+                <h2>Payment Method</h2>
+
+                <!-- Cash on Delivery -->
+                <label class="payment-option">
+
+                    <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="Cash on Delivery"
+                        checked
+                    >
+
+                    <span>
+                        <strong>Cash on Delivery</strong>
+                        <small>Pay when your order arrives</small>
+                    </span>
+
+                </label>
+
+                <!-- UPI Payment -->
+                <label class="payment-option">
+
+                    <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="UPI Manual"
+                    >
+
+                    <span>
+                        <strong>UPI (Manual Payment)</strong>
+
+                        <small>
+                            Transfer using your UPI app.
+                            Payment is not automatically verified.
+                        </small>
+                    </span>
+
+                </label>
+
+                <!-- UPI Instructions -->
+                <div
+                    id="upiInstructions"
+                    class="upi-instructions"
+                    hidden
+                >
+
+                    <p>
+                        Complete your UPI payment to the store's configured
+                        UPI ID, then enter the transaction reference below.
+                        Store owner must configure the UPI ID in
+                        <code>js/checkout.js</code>.
+                    </p>
+
+                    <label for="upiReference">
+                        UPI transaction reference (optional)
+                    </label>
+
+                    <input
+                        id="upiReference"
+                        type="text"
+                        placeholder="Transaction / UTR reference"
+                    >
+
+                </div>
+
+            </div>
+
         </section>
 
+        <!-- Right Section: Order Summary -->
         <aside class="checkout-right">
+
             <h2>Order Summary</h2>
 
-            <div id="checkoutItems">
-                <!-- Cart items will be loaded here -->
-            </div>
+            <div id="checkoutItems"></div>
 
             <div class="summary-row">
                 <span>Subtotal</span>
@@ -103,12 +261,20 @@
                 <span id="checkoutTotal">₹0</span>
             </div>
 
-            <button id="placeOrderBtn" disabled>
-                Continue to Payment
+            <!-- Place Order -->
+            <button
+                id="placeOrderBtn"
+                disabled
+            >
+                Place Order
             </button>
+
         </aside>
 
     </main>
-<script type="module" src="js/checkout.js"></script>
+
+    <!-- JavaScript -->
+    <script type="module" src="js/checkout.js"></script>
+
 </body>
 </html>
