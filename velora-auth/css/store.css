@@ -847,3 +847,24 @@ a {
 
     background: rgba(255, 255, 255, 0.85);
 }
+.nav-actions {
+    display: flex;
+    align-items: center;
+}
+
+.signin-link {
+    text-decoration: none;
+    color: #30251f;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 22px;
+    border: 1px solid #e9e1d9;
+    border-radius: 30px;
+    transition: 0.3s ease;
+}
+
+.signin-link:hover {
+    background: #30251f;
+    color: #ffffff;
+    border-color: #30251f;
+}
