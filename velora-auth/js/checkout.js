@@ -5,11 +5,6 @@ const FIRESTORE_URL =
 
 const user = JSON.parse(sessionStorage.getItem("veloraUser"));
 
-if (!user) {
-    alert("Please login to continue checkout.");
-    window.location.href = "login.html";
-}
-
 const cart = JSON.parse(localStorage.getItem("veloraCart")) || [];
 
 const checkoutItems = document.getElementById("checkoutItems");
@@ -17,11 +12,80 @@ const checkoutSubtotal = document.getElementById("checkoutSubtotal");
 const checkoutShipping = document.getElementById("checkoutShipping");
 const checkoutTotal = document.getElementById("checkoutTotal");
 const placeOrderBtn = document.getElementById("placeOrderBtn");
+const addressForm = document.getElementById("addressForm");
 
 let subtotal = 0;
 let shipping = 0;
 let total = 0;
 let products = [];
+
+// Convert Firestore REST field values
+function decodeFirestoreValue(value) {
+    if (!value) return "";
+
+    if (value.stringValue !== undefined) return value.stringValue;
+    if (value.integerValue !== undefined) return Number(value.integerValue);
+    if (value.doubleValue !== undefined) return Number(value.doubleValue);
+    if (value.booleanValue !== undefined) return value.booleanValue;
+    if (value.timestampValue !== undefined) return value.timestampValue;
+
+    if (value.nullValue !== undefined) return null;
+
+    if (value.mapValue) {
+        return decodeFirestoreFields(value.mapValue.fields || {});
+    }
+
+    if (value.arrayValue) {
+        return (value.arrayValue.values || []).map(decodeFirestoreValue);
+    }
+
+    return "";
+}
+
+function decodeFirestoreFields(fields) {
+    const result = {};
+
+    Object.entries(fields || {}).forEach(([key, value]) => {
+        result[key] = decodeFirestoreValue(value);
+    });
+
+    return result;
+}
+
+// Safely display text in HTML
+function escapeHTML(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+// Find a product field even if its name has different casing
+function getProductField(product, possibleNames) {
+    for (const possibleName of possibleNames) {
+        const actualKey = Object.keys(product).find(
+            key => key.toLowerCase() === possibleName.toLowerCase()
+        );
+
+        if (actualKey !== undefined) {
+            const value = product[actualKey];
+
+            if (
+                value !== undefined &&
+                value !== null &&
+                String(value).trim() !== "" &&
+                String(value).toLowerCase() !== "undefined" &&
+                String(value).toLowerCase() !== "null"
+            ) {
+                return value;
+            }
+        }
+    }
+
+    return null;
+}
 
 // Fetch products from Firestore
 async function fetchProducts() {
@@ -30,29 +94,30 @@ async function fetchProducts() {
             `${FIRESTORE_URL}/Products?key=${API_KEY}`
         );
 
+        if (!response.ok) {
+            throw new Error("Unable to fetch products from Firestore");
+        }
+
         const data = await response.json();
 
         products = (data.documents || []).map(doc => ({
             id: doc.name.split("/").pop(),
-            ...Object.fromEntries(
-                Object.entries(doc.fields || {}).map(([key, value]) => [
-                    key,
-                    value.stringValue ||
-                    value.integerValue ||
-                    value.doubleValue ||
-                    value.booleanValue
-                ])
-            )
+            ...decodeFirestoreFields(doc.fields || {})
         }));
 
+        console.log("Checkout products:", products);
+
         renderCheckout();
+
     } catch (error) {
         console.error("Error fetching products:", error);
-        checkoutItems.innerHTML = "<p>Unable to load products.</p>";
+        checkoutItems.innerHTML =
+            `<p class="cart-error">Unable to load products. Please refresh.</p>`;
+        placeOrderBtn.disabled = true;
     }
 }
 
-// Display cart items
+// Display checkout products and calculate totals
 function renderCheckout() {
     checkoutItems.innerHTML = "";
     subtotal = 0;
@@ -63,14 +128,49 @@ function renderCheckout() {
         return;
     }
 
+    let missingProducts = false;
+
     cart.forEach(cartItem => {
         const product = products.find(
             p => p.id === cartItem.productId
         );
 
-        if (!product) return;
+        if (!product) {
+            missingProducts = true;
 
-        const price = Number(product.price) || 0;
+            checkoutItems.innerHTML += `
+                <div class="checkout-item">
+                    <div class="checkout-item-info">
+                        <h3>Product unavailable</h3>
+                        <p>Item could not be loaded from the catalog.</p>
+                    </div>
+                </div>
+            `;
+
+            return;
+        }
+
+        const productName = getProductField(product, [
+            "name",
+            "productName",
+            "product_name",
+            "productTitle",
+            "product_title",
+            "title",
+            "itemName",
+            "Name"
+        ]) || `Product ${product.id}`;
+
+        const price = Number(
+            getProductField(product, [
+                "price",
+                "productPrice",
+                "product_price",
+                "sellingPrice",
+                "selling_price"
+            ])
+        ) || 0;
+
         const quantity = Number(cartItem.quantity) || 1;
         const itemTotal = price * quantity;
 
@@ -79,9 +179,10 @@ function renderCheckout() {
         checkoutItems.innerHTML += `
             <div class="checkout-item">
                 <div class="checkout-item-info">
-                    <h3>${product.name}</h3>
+                    <h3>${escapeHTML(productName)}</h3>
                     <p>Qty: ${quantity}</p>
                 </div>
+
                 <div class="checkout-item-price">
                     ₹${itemTotal.toLocaleString("en-IN")}
                 </div>
@@ -92,18 +193,30 @@ function renderCheckout() {
     shipping = subtotal >= 999 ? 0 : 50;
     total = subtotal + shipping;
 
-    checkoutSubtotal.textContent = `₹${subtotal.toLocaleString("en-IN")}`;
+    checkoutSubtotal.textContent =
+        `₹${subtotal.toLocaleString("en-IN")}`;
+
     checkoutShipping.textContent =
         shipping === 0 ? "FREE" : `₹${shipping}`;
-    checkoutTotal.textContent = `₹${total.toLocaleString("en-IN")}`;
 
-    placeOrderBtn.disabled = false;
+    checkoutTotal.textContent =
+        `₹${total.toLocaleString("en-IN")}`;
+
+    // Payment can continue only when address is saved and all products loaded
+    const savedAddress = sessionStorage.getItem("veloraCheckoutAddress");
+
+    placeOrderBtn.disabled = !savedAddress || missingProducts;
 }
 
-// Save delivery address
 // Save delivery address to Firestore
-document.getElementById("addressForm").addEventListener("submit", async function (e) {
+addressForm.addEventListener("submit", async function (e) {
     e.preventDefault();
+
+    if (!user) {
+        alert("Please login to continue checkout.");
+        window.location.href = "login.html";
+        return;
+    }
 
     const address = {
         fullName: document.getElementById("fullName").value.trim(),
@@ -114,9 +227,13 @@ document.getElementById("addressForm").addEventListener("submit", async function
         state: document.getElementById("state").value.trim(),
         pincode: document.getElementById("pincode").value.trim(),
         addressType: document.getElementById("addressType").value,
-        userId: user.userId,
+        userId: user.userId || user.documentId,
         createdAt: new Date().toISOString()
     };
+
+    const saveAddressBtn = document.getElementById("saveAddressBtn");
+    saveAddressBtn.disabled = true;
+    saveAddressBtn.textContent = "Saving address...";
 
     try {
         const response = await fetch(
@@ -144,6 +261,8 @@ document.getElementById("addressForm").addEventListener("submit", async function
         );
 
         if (!response.ok) {
+            const errorData = await response.json();
+            console.error("Firestore address error:", errorData);
             throw new Error("Failed to save address");
         }
 
@@ -158,11 +277,16 @@ document.getElementById("addressForm").addEventListener("submit", async function
         );
 
         alert("Delivery address saved successfully!");
-        placeOrderBtn.disabled = false;
+
+        renderCheckout();
 
     } catch (error) {
         console.error("Address save error:", error);
         alert("Unable to save address. Please try again.");
+
+    } finally {
+        saveAddressBtn.disabled = false;
+        saveAddressBtn.textContent = "Save Delivery Address";
     }
 });
 
@@ -178,4 +302,10 @@ placeOrderBtn.addEventListener("click", function () {
     alert("Delivery address confirmed! Payment step will be added next.");
 });
 
-fetchProducts();
+// Require login
+if (!user) {
+    alert("Please login to continue checkout.");
+    window.location.href = "login.html";
+} else {
+    fetchProducts();
+}
