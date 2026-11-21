@@ -170,32 +170,23 @@ function normalizeCategory(category) {
    IMAGE URL NORMALIZATION
 ========================= */
 
-function normalizeImageUrl(imageUrl) {
-    if (!imageUrl) return "";
+fetch(FIRESTORE_URL)
+    .then(response => response.json())
+    .then(data => {
+        console.table(
+            (data.documents || []).map(doc => {
+                const f = doc.fields || {};
 
-    let url = String(imageUrl).trim().replace(/\\/g, "/");
-
-    const deployedBase =
-        "https://keerthanavijayakannan.github.io/E-Commerce-Application/velora-auth/img/";
-
-    // Extract image filename from old local server URLs or stored paths
-    if (
-        url.includes("127.0.0.1") ||
-        url.includes("localhost") ||
-        url.includes("/velora-auth/img/") ||
-        url.startsWith("velora-auth/img/") ||
-        url.startsWith("../img/") ||
-        url.startsWith("./img/") ||
-        url.startsWith("img/")
-    ) {
-        const filename = url.split("/").pop().split("?")[0];
-
-        return deployedBase + encodeURIComponent(filename);
-    }
-
-    // Keep external URLs
-    return url;
-}
+                return {
+                    product: f.productName?.stringValue || f.name?.stringValue,
+                    imageUrl: f.imageUrl?.stringValue,
+                    image: f.image?.stringValue,
+                    productImage: f.productImage?.stringValue,
+                    imagePath: f.imagePath?.stringValue
+                };
+            })
+        );
+    });
 
 /* =========================
    LOAD WISHLIST
