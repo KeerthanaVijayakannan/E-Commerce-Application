@@ -182,7 +182,6 @@ function normalizeImageUrl(imageUrl) {
 
     let url = String(imageUrl).trim().replace(/\\/g, "/");
 
-    // Already a proper external URL
     if (
         url.startsWith("https://") &&
         !url.includes("/velora-auth/img/")
@@ -190,7 +189,6 @@ function normalizeImageUrl(imageUrl) {
         return url;
     }
 
-    // Extract the filename from stored local paths or old deployed paths
     if (
         url.includes("127.0.0.1") ||
         url.includes("localhost") ||
@@ -207,7 +205,6 @@ function normalizeImageUrl(imageUrl) {
         return IMAGE_BASE + encodeURIComponent(filename);
     }
 
-    // Relative path filename
     if (!url.startsWith("http")) {
         const filename = url.split("/").pop().split("?")[0];
 
@@ -264,7 +261,6 @@ async function saveWishlist() {
         sessionStorage.getItem("veloraUser") || "null"
     );
 
-    // Save guest wishlist locally
     if (!user) {
         localStorage.setItem(
             "veloraWishlist",
@@ -457,17 +453,11 @@ function renderProducts() {
 
     let list = [...allProducts];
 
-
-    /* CATEGORY FILTER */
-
     if (currentFilter !== "all") {
         list = list.filter(
             product => product.categoryId === currentFilter
         );
     }
-
-
-    /* SEARCH */
 
     const term = searchInput
         ? searchInput.value.trim().toLowerCase()
@@ -488,9 +478,6 @@ function renderProducts() {
                 .includes(term)
         );
     }
-
-
-    /* SORT */
 
     const sortValue = sortSelect
         ? sortSelect.value
@@ -513,9 +500,6 @@ function renderProducts() {
             break;
     }
 
-
-    /* EMPTY RESULT */
-
     if (!list.length) {
         productsGrid.innerHTML = `
             <div class="loading-message">
@@ -524,9 +508,6 @@ function renderProducts() {
         `;
         return;
     }
-
-
-    /* PRODUCT CARDS */
 
     productsGrid.innerHTML = list.map(product => {
         const category = product.categoryId;
@@ -577,7 +558,6 @@ function renderProducts() {
 
                 </div>
 
-
                 <div class="product-info">
 
                     <p class="product-category-label">
@@ -613,7 +593,6 @@ function renderProducts() {
         `;
     }).join("");
 
-
     /* IMAGE FALLBACK */
 
     productsGrid.querySelectorAll(".product-image").forEach(image => {
@@ -641,7 +620,6 @@ function renderProducts() {
         };
     });
 
-
     /* CART EVENTS */
 
     productsGrid.querySelectorAll(".add-cart-btn").forEach(button => {
@@ -649,7 +627,6 @@ function renderProducts() {
             addToCart(button.dataset.productId);
         };
     });
-
 
     /* WISHLIST EVENTS */
 
@@ -799,7 +776,6 @@ if (cartButton) {
 ========================= */
 
 const loginLink = document.getElementById("loginLink");
-
 const profileLink = document.getElementById("profileLink");
 
 const user = JSON.parse(
@@ -832,48 +808,43 @@ if (user) {
         )
     );
 }
+
+
+/* =========================
+   NAVBAR AUTHENTICATION
+========================= */
+
 function updateNavbarAuth() {
-    const signinLink = document.querySelector(".signin-link");
     const navActions = document.querySelector(".nav-actions");
 
     if (!navActions) return;
 
-    const customerLoggedIn =
-        localStorage.getItem("customerLoggedIn") === "true" ||
-        localStorage.getItem("userLoggedIn") === "true" ||
-        sessionStorage.getItem("customerLoggedIn") === "true";
+    const user = JSON.parse(
+        sessionStorage.getItem("veloraUser") || "null"
+    );
 
-    if (customerLoggedIn) {
+    if (user) {
         navActions.innerHTML = `
-            <a href="profile.html" class="profile-link">My Account</a>
+            <a href="profile.html" class="profile-link">
+                My Account
+            </a>
         `;
     } else {
         navActions.innerHTML = `
-            <a href="role-selection.html" class="signin-link">Sign In</a>
+            <a href="role-selection.html" class="signin-link">
+                Sign In
+            </a>
         `;
     }
 }
-function updateNavbarAuth() {
-    const signInBtn = document.querySelector(".signin-link");
-    const loggedInUser = localStorage.getItem("loggedInUser");
 
-    if (!signInBtn) return;
 
-    if (loggedInUser) {
-        signInBtn.textContent = "My Account";
-        signInBtn.href = "profile.html";
-    } else {
-        signInBtn.textContent = "Sign In";
-        signInBtn.href = "role-selection.html";
-    }
-}
-document.addEventListener("DOMContentLoaded", () => {
-    updateNavbarAuth();
-});
 /* =========================
    INITIALIZATION
 ========================= */
 
 updateCartCount();
+
+updateNavbarAuth();
 
 loadWishlist().then(fetchProducts);
