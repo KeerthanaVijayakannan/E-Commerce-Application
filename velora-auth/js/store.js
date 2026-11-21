@@ -170,49 +170,30 @@ function normalizeCategory(category) {
    IMAGE URL NORMALIZATION
 ========================= */
 
-/* =========================
-   IMAGE URL NORMALIZATION
-========================= */
-
 function normalizeImageUrl(imageUrl) {
     if (!imageUrl) return "";
 
-    let url = String(imageUrl).trim();
+    let url = String(imageUrl).trim().replace(/\\/g, "/");
 
-    // GitHub Pages deployed image base URL
-    const deployedImageBase =
+    const deployedBase =
         "https://keerthanavijayakannan.github.io/E-Commerce-Application/velora-auth/img/";
 
-    // Convert local Live Server URLs to deployed image URLs
+    // Extract image filename from old local server URLs or stored paths
     if (
-        url.includes("127.0.0.1:5500") ||
-        url.includes("localhost:5500")
+        url.includes("127.0.0.1") ||
+        url.includes("localhost") ||
+        url.includes("/velora-auth/img/") ||
+        url.startsWith("velora-auth/img/") ||
+        url.startsWith("../img/") ||
+        url.startsWith("./img/") ||
+        url.startsWith("img/")
     ) {
         const filename = url.split("/").pop().split("?")[0];
-        return deployedImageBase + filename;
+
+        return deployedBase + encodeURIComponent(filename);
     }
 
-    // Convert stored velora-auth/img paths
-    if (url.includes("/velora-auth/img/")) {
-        const filename = url.split("/").pop().split("?")[0];
-        return deployedImageBase + filename;
-    }
-
-    // Convert admin relative paths
-    if (url.startsWith("../img/")) {
-        return "img/" + url.substring(7);
-    }
-
-    if (url.startsWith("./img/")) {
-        return "img/" + url.substring(6);
-    }
-
-    // Already relative image path
-    if (url.startsWith("img/")) {
-        return url;
-    }
-
-    // External image URLs remain unchanged
+    // Keep external URLs
     return url;
 }
 
