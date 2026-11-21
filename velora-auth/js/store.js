@@ -170,29 +170,51 @@ function normalizeCategory(category) {
    IMAGE URL NORMALIZATION
 ========================= */
 
+/* =========================
+   IMAGE URL NORMALIZATION
+========================= */
+
 function normalizeImageUrl(imageUrl) {
     if (!imageUrl) return "";
 
     let url = String(imageUrl).trim();
 
-    /*
-       Admin product page is inside /admin/.
-       Store page is inside the root /velora-auth/.
+    // GitHub Pages deployed image base URL
+    const deployedImageBase =
+        "https://keerthanavijayakannan.github.io/E-Commerce-Application/velora-auth/img/";
 
-       Convert Admin-relative paths to Store-relative paths.
-    */
+    // Convert local Live Server URLs to deployed image URLs
+    if (
+        url.includes("127.0.0.1:5500") ||
+        url.includes("localhost:5500")
+    ) {
+        const filename = url.split("/").pop().split("?")[0];
+        return deployedImageBase + filename;
+    }
 
+    // Convert stored velora-auth/img paths
+    if (url.includes("/velora-auth/img/")) {
+        const filename = url.split("/").pop().split("?")[0];
+        return deployedImageBase + filename;
+    }
+
+    // Convert admin relative paths
     if (url.startsWith("../img/")) {
-        url = url.replace("../img/", "img/");
+        return "img/" + url.substring(7);
     }
 
     if (url.startsWith("./img/")) {
-        url = url.replace("./img/", "img/");
+        return "img/" + url.substring(6);
     }
 
+    // Already relative image path
+    if (url.startsWith("img/")) {
+        return url;
+    }
+
+    // External image URLs remain unchanged
     return url;
 }
-
 
 /* =========================
    LOAD WISHLIST
