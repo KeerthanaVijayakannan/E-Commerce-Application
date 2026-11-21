@@ -1,0 +1,175 @@
+/* =========================
+   VELORA GLOBAL FOOTER
+========================= */
+
+.velora-footer {
+    width: 100%;
+    background: #28231f;
+    color: #f5eee7;
+    margin-top: 70px;
+    font-family: inherit;
+}
+
+/* Main Footer */
+
+.footer-main {
+    max-width: 1250px;
+    margin: auto;
+    padding: 65px 7% 55px;
+
+    display: grid;
+    grid-template-columns: 1.7fr 1fr 1fr 1fr;
+    gap: 45px;
+}
+
+/* Brand */
+
+.footer-logo {
+    display: inline-block;
+    text-decoration: none;
+    color: #fffaf5;
+
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: 4px;
+}
+
+.footer-logo span {
+    color: #c98c72;
+}
+
+.footer-tagline {
+    margin: 18px 0 12px;
+    color: #d7b19d;
+
+    font-size: 20px;
+    line-height: 1.6;
+    font-weight: 500;
+}
+
+.footer-brand-description {
+    max-width: 300px;
+    color: #bdb4ac;
+
+    font-size: 14px;
+    line-height: 1.9;
+}
+
+/* Footer Columns */
+
+.footer-column {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.footer-column h3 {
+    color: #d7b19d;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+
+    margin: 5px 0 12px;
+}
+
+.footer-column a,
+.footer-column p {
+    color: #c7beb7;
+    font-size: 14px;
+    text-decoration: none;
+    margin: 0;
+
+    transition: color 0.25s ease,
+                transform 0.25s ease;
+}
+
+.footer-column a:hover {
+    color: #ffffff;
+    transform: translateX(4px);
+}
+
+/* Footer Bottom */
+
+.footer-bottom {
+    max-width: 1250px;
+    margin: auto;
+
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+
+    padding: 22px 7%;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.footer-bottom p {
+    color: #a9a19a;
+    font-size: 12px;
+    margin: 0;
+    letter-spacing: 0.3px;
+}
+
+.footer-bottom-note {
+    color: #d7b19d !important;
+}
+
+/* Tablet */
+
+@media (max-width: 900px) {
+
+    .footer-main {
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+        padding: 50px 6%;
+    }
+
+    .footer-brand {
+        grid-column: 1 / -1;
+    }
+}
+
+/* Mobile */
+
+@media (max-width: 550px) {
+
+    .velora-footer {
+        margin-top: 45px;
+    }
+
+    .footer-main {
+        grid-template-columns: 1fr 1fr;
+        gap: 35px 22px;
+        padding: 42px 7%;
+    }
+
+    .footer-brand {
+        grid-column: 1 / -1;
+    }
+
+    .footer-logo {
+        font-size: 28px;
+    }
+
+    .footer-tagline {
+        font-size: 18px;
+    }
+
+    .footer-column h3 {
+        font-size: 12px;
+    }
+
+    .footer-column a,
+    .footer-column p {
+        font-size: 13px;
+    }
+
+    .footer-bottom {
+        padding: 20px 7%;
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+}

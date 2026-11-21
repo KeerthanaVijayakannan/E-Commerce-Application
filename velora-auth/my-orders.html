@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,9 +7,8 @@
 
     <title>My Orders | Velora</title>
 
-    <!-- CSS -->
-    <link rel="stylesheet" href="css/customer-features.css">
     <link rel="stylesheet" href="css/store.css">
+    <link rel="stylesheet" href="css/my-order.css">
 </head>
 
 <body>
@@ -28,12 +28,74 @@
             View your purchases and follow their status.
         </p>
 
+        <!-- Order Count -->
+        <div id="ordersCount" class="orders-count">
+            0 orders
+        </div>
+
         <!-- Orders Container -->
         <div id="ordersContainer">
-            <p>Loading orders...</p>
+            <p>Loading your order history...</p>
+        </div>
+
+        <!-- Empty Orders State -->
+        <div id="emptyOrders" style="display: none;">
+            <h3>No orders yet</h3>
+            <p>You haven't placed any orders yet.</p>
+            <a href="store.html">Continue Shopping</a>
         </div>
 
     </main>
+
+<footer class="velora-footer">
+    <div class="footer-top">
+
+        <div class="footer-brand">
+            <a href="store.html" class="footer-logo">VELORA<span>.</span></a>
+            <p class="footer-tagline">
+                Style that speaks. Comfort that stays.
+            </p>
+            <p class="footer-description">
+                Discover pieces that make everyday dressing feel a little more special.
+                Your style, your story, your Velora.
+            </p>
+        </div>
+
+        <div class="footer-links">
+            <h3>Explore</h3>
+            <a href="store.html">Shop Collection</a>
+            <a href="wishlist.html">My Wishlist</a>
+            <a href="customer-profile.html">My Profile</a>
+            <a href="my-orders.html">My Orders</a>
+        </div>
+
+        <div class="footer-links">
+            <h3>Customer Care</h3>
+            <a href="customer-profile.html">Account Details</a>
+            <a href="my-orders.html">Order Tracking</a>
+            <a href="checkout.html">Checkout</a>
+            <a href="store.html">Continue Shopping</a>
+        </div>
+
+        <div class="footer-newsletter">
+            <h3>A little style inspiration</h3>
+            <p>
+                Good style never goes out of fashion.
+                Stay inspired and keep discovering.
+            </p>
+            <a href="store.html" class="footer-shop-btn">
+                Explore Velora <span>→</span>
+            </a>
+        </div>
+
+    </div>
+
+    <div class="footer-bottom">
+        <p>© 2026 VELORA. Made for your everyday style.</p>
+        <p class="footer-bottom-note">Wear what feels like you.</p>
+    </div>
+</footer>
+
 
     <!-- JavaScript -->
     <script src="js/my-orders.js"></script>

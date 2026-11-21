@@ -1,30 +1,56 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>My Account | Velora</title>
+
     <link rel="stylesheet" href="css/profile.css">
 </head>
 <body>
 
+    <!-- NAVBAR -->
     <header class="profile-navbar">
-        <a href="store.html" class="logo">velora<span>.</span></a>
+
+        <a href="store.html" class="logo">
+            velora<span>.</span>
+        </a>
 
         <div class="nav-actions">
-            <a href="store.html" class="back-store">← Continue shopping</a>
-            <button id="logoutButton" class="logout-button">Logout</button>
+
+            <a href="store.html" class="back-store">
+                ← Continue shopping
+            </a>
+
+            <button id="logoutButton" class="logout-button">
+                Logout
+            </button>
+
         </div>
+
     </header>
 
+
+    <!-- PROFILE MAIN -->
     <main class="profile-main">
 
+        <!-- PROFILE HEADING -->
         <section class="profile-heading">
+
             <p class="eyebrow">YOUR ACCOUNT</p>
+
             <h1>My Profile</h1>
-            <p>Manage your account and explore your Velora activity.</p>
+
+            <p>
+                Manage your account and explore your Velora activity.
+            </p>
+
         </section>
 
+
+        <!-- PROFILE WELCOME CARD -->
         <section class="profile-card">
 
             <div class="profile-avatar" id="profileAvatar">
@@ -32,13 +58,23 @@
             </div>
 
             <div class="profile-welcome">
+
                 <p class="welcome-label">WELCOME BACK</p>
-                <h2 id="profileName">Customer</h2>
-                <p id="profileEmail">email@example.com</p>
+
+                <h2 id="profileName">
+                    Customer
+                </h2>
+
+                <p id="profileEmail">
+                    email@example.com
+                </p>
+
             </div>
 
         </section>
 
+
+        <!-- ACCOUNT DETAILS -->
         <section class="profile-details-card">
 
             <div class="section-heading">
@@ -71,31 +107,67 @@
 
         </section>
 
+
+        <!-- PROFILE SHORTCUTS -->
         <section class="profile-shortcuts">
 
+            <!-- MY CART -->
             <a href="cart.html" class="shortcut-card">
-                <div class="shortcut-icon">🛍</div>
-                <div>
-                    <h3>My Cart</h3>
-                    <p>View your saved shopping items</p>
+
+                <div class="shortcut-icon">
+                    🛍
                 </div>
+
+                <div class="shortcut-content">
+                    <h3>My Cart</h3>
+                    <p>View your shopping items</p>
+                </div>
+
                 <span class="shortcut-arrow">→</span>
+
             </a>
 
-            <div class="shortcut-card orders-card">
-                <div class="shortcut-icon">📦</div>
-                <div>
-                    <h3>My Orders</h3>
-                    <p>Order history will be available here</p>
+
+            <!-- MY WISHLIST -->
+            <a href="wishlist.html" class="shortcut-card">
+
+                <div class="shortcut-icon">
+                    ♡
                 </div>
+
+                <div class="shortcut-content">
+                    <h3>My Wishlist</h3>
+                    <p>Explore your favourite products</p>
+                </div>
+
                 <span class="shortcut-arrow">→</span>
-            </div>
+
+            </a>
+
+
+            <!-- MY ORDERS -->
+            <a href="my-orders.html" class="shortcut-card orders-card">
+
+                <div class="shortcut-icon">
+                    📦
+                </div>
+
+                <div class="shortcut-content">
+                    <h3>My Orders</h3>
+                    <p>View and track your purchases</p>
+                </div>
+
+                <span class="shortcut-arrow">→</span>
+
+            </a>
 
         </section>
 
     </main>
 
-    <script src="js/profile.js"></script>
 
+    <!-- JAVASCRIPT -->
+    <script src="js/profile.js"></script>
+<script src="js/footer.js"></script>
 </body>
 </html>

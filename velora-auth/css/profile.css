@@ -304,3 +304,72 @@ body {
         grid-template-columns: 1fr;
     }
 }
+.profile-action-link {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    padding: 18px 20px;
+    margin-top: 15px;
+    background: #fff;
+    border: 1px solid #eee8e2;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #24231f;
+    transition: 0.25s ease;
+}
+
+.profile-action-link:hover {
+    border-color: #a35f46;
+    transform: translateY(-2px);
+}
+
+.profile-action-link span:first-child {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.profile-action-link span:last-child {
+    font-size: 12px;
+    color: #a35f46;
+}
+
+/* Clickable profile shortcut cards */
+.profile-shortcuts .shortcut-card {
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+}
+
+/* Shortcut card content */
+.shortcut-content {
+    flex: 1;
+}
+
+/* Card hover effect */
+.profile-shortcuts .shortcut-card:hover {
+    border-color: #a35f46;
+    transform: translateY(-3px);
+    transition: 0.25s ease;
+}
+
+/* Shortcut arrow */
+.shortcut-arrow {
+    transition: transform 0.25s ease;
+}
+
+.profile-shortcuts .shortcut-card:hover .shortcut-arrow {
+    transform: translateX(4px);
+}
+
+/* Wishlist icon */
+.profile-shortcuts .shortcut-icon {
+    flex-shrink: 0;
+}
+
+/* Responsive profile shortcuts */
+@media (max-width: 600px) {
+    .profile-shortcuts {
+        grid-template-columns: 1fr;
+    }
+}
