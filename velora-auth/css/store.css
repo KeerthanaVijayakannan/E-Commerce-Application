@@ -868,3 +868,19 @@ a {
     color: #ffffff;
     border-color: #30251f;
 }
+.profile-link {
+    text-decoration: none;
+    color: #30251f;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 22px;
+    border: 1px solid #e9e1d9;
+    border-radius: 30px;
+    transition: 0.3s ease;
+}
+
+.profile-link:hover {
+    background: #30251f;
+    color: #fff;
+    border-color: #30251f;
+}

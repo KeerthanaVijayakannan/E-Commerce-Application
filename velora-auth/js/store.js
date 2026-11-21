@@ -832,8 +832,44 @@ if (user) {
         )
     );
 }
+function updateNavbarAuth() {
+    const signinLink = document.querySelector(".signin-link");
+    const navActions = document.querySelector(".nav-actions");
 
+    if (!navActions) return;
 
+    const customerLoggedIn =
+        localStorage.getItem("customerLoggedIn") === "true" ||
+        localStorage.getItem("userLoggedIn") === "true" ||
+        sessionStorage.getItem("customerLoggedIn") === "true";
+
+    if (customerLoggedIn) {
+        navActions.innerHTML = `
+            <a href="profile.html" class="profile-link">My Account</a>
+        `;
+    } else {
+        navActions.innerHTML = `
+            <a href="role-selection.html" class="signin-link">Sign In</a>
+        `;
+    }
+}
+function updateNavbarAuth() {
+    const signInBtn = document.querySelector(".signin-link");
+    const loggedInUser = localStorage.getItem("loggedInUser");
+
+    if (!signInBtn) return;
+
+    if (loggedInUser) {
+        signInBtn.textContent = "My Account";
+        signInBtn.href = "profile.html";
+    } else {
+        signInBtn.textContent = "Sign In";
+        signInBtn.href = "role-selection.html";
+    }
+}
+document.addEventListener("DOMContentLoaded", () => {
+    updateNavbarAuth();
+});
 /* =========================
    INITIALIZATION
 ========================= */
