@@ -4,9 +4,14 @@
 
 const API_KEY = "AIzaSyAbnDfdwRBn8lPhXVw8xDq5MZEb2X0SK5M";
 
-const FIRESTORE_URL = `https://firestore.googleapis.com/v1/projects/e-commerce-b63d7/databases/(default)/documents/Products?pageSize=1000&key=${API_KEY}`;
+const FIRESTORE_URL =
+    `https://firestore.googleapis.com/v1/projects/e-commerce-b63d7/databases/(default)/documents/Products?pageSize=1000&key=${API_KEY}`;
 
-const FIRESTORE = `https://firestore.googleapis.com/v1/projects/e-commerce-b63d7/databases/(default)/documents`;
+const FIRESTORE =
+    `https://firestore.googleapis.com/v1/projects/e-commerce-b63d7/databases/(default)/documents`;
+
+const IMAGE_BASE =
+    "https://keerthanavijayakannan.github.io/E-Commerce-Application/velora-auth/img/";
 
 
 /* =========================
@@ -75,6 +80,7 @@ function getFieldValue(field) {
         "";
 }
 
+
 function decode(value) {
     if (!value) return "";
 
@@ -104,6 +110,7 @@ function decode(value) {
 
     return "";
 }
+
 
 function decodeFields(fields) {
     const result = {};
@@ -170,23 +177,48 @@ function normalizeCategory(category) {
    IMAGE URL NORMALIZATION
 ========================= */
 
-fetch(FIRESTORE_URL)
-    .then(response => response.json())
-    .then(data => {
-        console.table(
-            (data.documents || []).map(doc => {
-                const f = doc.fields || {};
+function normalizeImageUrl(imageUrl) {
+    if (!imageUrl) return "";
 
-                return {
-                    product: f.productName?.stringValue || f.name?.stringValue,
-                    imageUrl: f.imageUrl?.stringValue,
-                    image: f.image?.stringValue,
-                    productImage: f.productImage?.stringValue,
-                    imagePath: f.imagePath?.stringValue
-                };
-            })
-        );
-    });
+    let url = String(imageUrl).trim().replace(/\\/g, "/");
+
+    // Already a proper external URL
+    if (
+        url.startsWith("https://") &&
+        !url.includes("/velora-auth/img/")
+    ) {
+        return url;
+    }
+
+    // Extract the filename from stored local paths or old deployed paths
+    if (
+        url.includes("127.0.0.1") ||
+        url.includes("localhost") ||
+        url.includes("/velora-auth/img/") ||
+        url.startsWith("velora-auth/img/") ||
+        url.startsWith("../img/") ||
+        url.startsWith("./img/") ||
+        url.startsWith("img/")
+    ) {
+        const filename = url.split("/").pop().split("?")[0];
+
+        if (!filename) return "";
+
+        return IMAGE_BASE + encodeURIComponent(filename);
+    }
+
+    // Relative path filename
+    if (!url.startsWith("http")) {
+        const filename = url.split("/").pop().split("?")[0];
+
+        if (!filename) return "";
+
+        return IMAGE_BASE + encodeURIComponent(filename);
+    }
+
+    return url;
+}
+
 
 /* =========================
    LOAD WISHLIST
@@ -201,6 +233,8 @@ async function loadWishlist() {
 
     try {
         const userId = user.userId || user.documentId;
+
+        if (!userId) return;
 
         const response = await fetch(
             `${FIRESTORE}/Wishlists/${userId}?key=${API_KEY}`
@@ -230,6 +264,7 @@ async function saveWishlist() {
         sessionStorage.getItem("veloraUser") || "null"
     );
 
+    // Save guest wishlist locally
     if (!user) {
         localStorage.setItem(
             "veloraWishlist",
@@ -269,7 +304,7 @@ async function saveWishlist() {
         }
     };
 
-    await fetch(
+    const response = await fetch(
         `${FIRESTORE}/Wishlists/${userId}?key=${API_KEY}`,
         {
             method: "PATCH",
@@ -279,6 +314,10 @@ async function saveWishlist() {
             body: JSON.stringify({ fields })
         }
     );
+
+    if (!response.ok) {
+        throw new Error("Failed to save wishlist");
+    }
 }
 
 
@@ -288,8 +327,9 @@ async function saveWishlist() {
 
 async function toggleWishlist(id) {
     if (!sessionStorage.getItem("veloraUser")) {
-        alert("Login to save your wishlist.");
-        location.href = "login.html";
+        alert("Please login to save your wishlist.");
+
+        location.href = "role-selection.html";
         return;
     }
 
@@ -302,7 +342,9 @@ async function toggleWishlist(id) {
     try {
         await saveWishlist();
         renderProducts();
+
     } catch (error) {
+        console.error("Wishlist update error:", error);
         alert("Wishlist update failed. Please retry.");
     }
 }
@@ -314,13 +356,23 @@ async function toggleWishlist(id) {
 
 async function fetchProducts() {
     try {
+        console.log("Fetching products from Firestore...");
+
         const response = await fetch(FIRESTORE_URL);
 
         if (!response.ok) {
-            throw new Error(`Products fetch failed: ${response.status}`);
+            const errorText = await response.text();
+
+            console.error("Firestore response:", errorText);
+
+            throw new Error(
+                `Products fetch failed: ${response.status}`
+            );
         }
 
         const data = await response.json();
+
+        console.log("Firestore products response:", data);
 
         allProducts = (data.documents || [])
             .map(document => {
@@ -328,7 +380,15 @@ async function fetchProducts() {
 
                 const documentId = document.name.split("/").pop();
 
-                const rawCategory = getFieldValue(fields.categoryId);
+                const rawCategory =
+                    getFieldValue(fields.categoryId) ||
+                    getFieldValue(fields.category);
+
+                const rawImage =
+                    getFieldValue(fields.imageUrl) ||
+                    getFieldValue(fields.image) ||
+                    getFieldValue(fields.productImage) ||
+                    getFieldValue(fields.imagePath);
 
                 return {
                     id: documentId,
@@ -339,7 +399,8 @@ async function fetchProducts() {
 
                     productName:
                         getFieldValue(fields.productName) ||
-                        getFieldValue(fields.name),
+                        getFieldValue(fields.name) ||
+                        "Unnamed Product",
 
                     categoryId: normalizeCategory(rawCategory),
 
@@ -347,34 +408,42 @@ async function fetchProducts() {
                         getFieldValue(fields.description),
 
                     price:
-                        Number(getFieldValue(fields.price) || 0),
+                        Number(
+                            getFieldValue(fields.price) || 0
+                        ),
 
                     stock:
-                        Number(getFieldValue(fields.stock) || 0),
+                        Number(
+                            getFieldValue(fields.stock) ||
+                            getFieldValue(fields.quantity) ||
+                            0
+                        ),
 
                     status:
-                        getFieldValue(fields.status) || "active",
+                        String(
+                            getFieldValue(fields.status) || "active"
+                        ).toLowerCase(),
 
                     imageUrl:
-                        normalizeImageUrl(
-                            getFieldValue(fields.imageUrl) ||
-                            getFieldValue(fields.image) ||
-                            getFieldValue(fields.productImage)
-                        )
+                        normalizeImageUrl(rawImage)
                 };
             })
             .filter(product => product.status === "active");
+
+        console.log("Loaded active products:", allProducts);
 
         renderProducts();
 
     } catch (error) {
         console.error("Product loading error:", error);
 
-        productsGrid.innerHTML = `
-            <div class="loading-message">
-                Unable to load products. Please check your connection.
-            </div>
-        `;
+        if (productsGrid) {
+            productsGrid.innerHTML = `
+                <div class="loading-message">
+                    Unable to load products. Please try again later.
+                </div>
+            `;
+        }
     }
 }
 
@@ -384,7 +453,10 @@ async function fetchProducts() {
 ========================= */
 
 function renderProducts() {
+    if (!productsGrid) return;
+
     let list = [...allProducts];
+
 
     /* CATEGORY FILTER */
 
@@ -394,22 +466,37 @@ function renderProducts() {
         );
     }
 
+
     /* SEARCH */
 
-    const term = searchInput.value.trim().toLowerCase();
+    const term = searchInput
+        ? searchInput.value.trim().toLowerCase()
+        : "";
 
     if (term) {
         list = list.filter(product =>
-            String(product.productName).toLowerCase().includes(term) ||
-            String(product.description).toLowerCase().includes(term) ||
+            String(product.productName)
+                .toLowerCase()
+                .includes(term) ||
+
+            String(product.description)
+                .toLowerCase()
+                .includes(term) ||
+
             String(categoryNames[product.categoryId] || "")
-                .toLowerCase().includes(term)
+                .toLowerCase()
+                .includes(term)
         );
     }
 
+
     /* SORT */
 
-    switch (sortSelect.value) {
+    const sortValue = sortSelect
+        ? sortSelect.value
+        : "";
+
+    switch (sortValue) {
         case "low-high":
             list.sort((a, b) => a.price - b.price);
             break;
@@ -420,10 +507,12 @@ function renderProducts() {
 
         case "name":
             list.sort((a, b) =>
-                String(a.productName).localeCompare(String(b.productName))
+                String(a.productName)
+                    .localeCompare(String(b.productName))
             );
             break;
     }
+
 
     /* EMPTY RESULT */
 
@@ -436,6 +525,7 @@ function renderProducts() {
         return;
     }
 
+
     /* PRODUCT CARDS */
 
     productsGrid.innerHTML = list.map(product => {
@@ -443,9 +533,11 @@ function renderProducts() {
 
         const emoji = categoryEmojis[category] || "🛍️";
 
-        const categoryName = categoryNames[category] || "Collection";
+        const categoryName =
+            categoryNames[category] || "Collection";
 
-        const isSaved = wishlistIds.has(product.productId);
+        const isSaved =
+            wishlistIds.has(product.productId);
 
         return `
             <article class="product-card">
@@ -463,6 +555,7 @@ function renderProducts() {
                                     class="product-image"
                                     src="${esc(product.imageUrl)}"
                                     alt="${esc(product.productName)}"
+                                    loading="lazy"
                                 >
                               `
                             : ""
@@ -483,6 +576,7 @@ function renderProducts() {
                     </button>
 
                 </div>
+
 
                 <div class="product-info">
 
@@ -519,13 +613,18 @@ function renderProducts() {
         `;
     }).join("");
 
-    /* IMAGE ERROR FALLBACK */
+
+    /* IMAGE FALLBACK */
 
     productsGrid.querySelectorAll(".product-image").forEach(image => {
+
         image.onerror = function () {
+            console.error("Image failed to load:", this.src);
+
             this.style.display = "none";
 
-            const emoji = this.parentElement.querySelector(".product-emoji");
+            const emoji =
+                this.parentElement.querySelector(".product-emoji");
 
             if (emoji) {
                 emoji.style.display = "flex";
@@ -533,13 +632,15 @@ function renderProducts() {
         };
 
         image.onload = function () {
-            const emoji = this.parentElement.querySelector(".product-emoji");
+            const emoji =
+                this.parentElement.querySelector(".product-emoji");
 
             if (emoji) {
                 emoji.style.display = "none";
             }
         };
     });
+
 
     /* CART EVENTS */
 
@@ -548,6 +649,7 @@ function renderProducts() {
             addToCart(button.dataset.productId);
         };
     });
+
 
     /* WISHLIST EVENTS */
 
@@ -569,6 +671,7 @@ function getCart() {
     );
 }
 
+
 function saveCart(cart) {
     localStorage.setItem(
         "veloraCart",
@@ -577,6 +680,7 @@ function saveCart(cart) {
 
     updateCartCount();
 }
+
 
 function addToCart(id) {
     const cart = getCart();
@@ -599,11 +703,12 @@ function addToCart(id) {
     alert("Product added to your cart!");
 }
 
+
 function updateCartCount() {
     const cart = getCart();
 
     const count = cart.reduce(
-        (sum, item) => sum + item.quantity,
+        (sum, item) => sum + Number(item.quantity || 0),
         0
     );
 
@@ -621,6 +726,7 @@ function updateCartCount() {
 
 document.querySelectorAll(".filter-btn").forEach(button => {
     button.addEventListener("click", () => {
+
         document.querySelectorAll(".filter-btn").forEach(item => {
             item.classList.remove("active");
         });
@@ -640,6 +746,7 @@ document.querySelectorAll(".filter-btn").forEach(button => {
 
 document.querySelectorAll(".category-card").forEach(button => {
     button.addEventListener("click", () => {
+
         currentFilter = button.dataset.category;
 
         document.querySelectorAll(".filter-btn").forEach(item => {
@@ -651,9 +758,14 @@ document.querySelectorAll(".category-card").forEach(button => {
 
         renderProducts();
 
-        document.getElementById("products").scrollIntoView({
-            behavior: "smooth"
-        });
+        const productsSection =
+            document.getElementById("products");
+
+        if (productsSection) {
+            productsSection.scrollIntoView({
+                behavior: "smooth"
+            });
+        }
     });
 });
 
@@ -662,9 +774,13 @@ document.querySelectorAll(".category-card").forEach(button => {
    SEARCH & SORT
 ========================= */
 
-searchInput.addEventListener("input", renderProducts);
+if (searchInput) {
+    searchInput.addEventListener("input", renderProducts);
+}
 
-sortSelect.addEventListener("change", renderProducts);
+if (sortSelect) {
+    sortSelect.addEventListener("change", renderProducts);
+}
 
 
 /* =========================
@@ -691,6 +807,7 @@ const user = JSON.parse(
 );
 
 if (user) {
+
     if (loginLink) {
         loginLink.style.display = "none";
     }
@@ -698,7 +815,9 @@ if (user) {
     if (profileLink) {
         profileLink.style.display = "inline-block";
     }
+
 } else {
+
     if (loginLink) {
         loginLink.style.display = "inline-block";
     }
@@ -708,7 +827,9 @@ if (user) {
     }
 
     wishlistIds = new Set(
-        JSON.parse(localStorage.getItem("veloraWishlist") || "[]")
+        JSON.parse(
+            localStorage.getItem("veloraWishlist") || "[]"
+        )
     );
 }
 
