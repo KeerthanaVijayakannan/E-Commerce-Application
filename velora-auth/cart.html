@@ -1,0 +1,75 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Cart | Velora</title>
+    <link rel="stylesheet" href="css/cart.css">
+</head>
+<body>
+
+    <header class="cart-navbar">
+        <a href="store.html" class="logo">velora<span>.</span></a>
+        <a href="store.html" class="continue-shopping">← Continue shopping</a>
+    </header>
+
+    <main class="cart-main">
+        <div class="cart-heading">
+            <p class="eyebrow">YOUR SELECTION</p>
+            <h1>Your shopping cart</h1>
+            <p class="cart-subtitle">Your everyday finds, all in one place.</p>
+        </div>
+
+        <div class="cart-layout">
+            <section class="cart-items-section">
+                <div class="cart-items-header">
+                    <span>PRODUCT</span>
+                    <span>QUANTITY</span>
+                    <span>TOTAL</span>
+                </div>
+
+                <div id="cartItems">
+                    <!-- Cart items will be rendered here -->
+                </div>
+            </section>
+
+            <aside class="cart-summary">
+                <h2>Order summary</h2>
+
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span id="cartSubtotal">₹0</span>
+                </div>
+
+                <div class="summary-row">
+                    <span>Shipping</span>
+                    <span id="cartShipping">₹0</span>
+                </div>
+
+                <div class="summary-row summary-total">
+                    <span>Total</span>
+                    <span id="cartTotal">₹0</span>
+                </div>
+
+                <button id="checkoutButton" class="checkout-button">
+                    Proceed to checkout →
+                </button>
+
+                <p class="checkout-note">
+                    Login will be required when you proceed to checkout.
+                </p>
+            </aside>
+        </div>
+
+        <div id="emptyCart" class="empty-cart" style="display: none;">
+            <div class="empty-cart-icon">♡</div>
+            <h2>Your cart is waiting</h2>
+            <p>Looks like you haven't added anything yet.</p>
+            <a href="store.html" class="shop-button">Explore the collection</a>
+        </div>
+    </main>
+
+    <script src="js/cart.js"></script>
+</body>
+</html>
